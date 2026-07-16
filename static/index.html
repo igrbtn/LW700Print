@@ -175,7 +175,10 @@
 
     <fieldset>
       <legend>Импорт из CSV (пакетная печать)</legend>
-      <input type="file" id="csvFile" accept=".csv">
+      <div class="row" style="align-items:center">
+        <input type="file" id="csvFile" accept=".csv" style="flex:2">
+        <button class="ghost hidden" id="closeCsvBtn" style="flex:0 0 auto">Закрыть файл</button>
+      </div>
       <div id="csvInfo" class="csvbox"></div>
       <label class="toggle hidden" id="groupWrap" style="margin-top:8px"><input type="checkbox" id="groupMode"> Мультилайн: собрать строки по колонке <b>group</b> (формат с line/bold/align/font/size_pt)</label>
       <div class="row" style="margin-top:8px">
@@ -296,7 +299,7 @@ function buildSpec(){
 }
 
 let renderTimer=null;
-function scheduleRender(){ clearTimeout(renderTimer); renderTimer=setTimeout(doRender, 180); }
+function scheduleRender(){ clearTimeout(renderTimer); renderTimer=setTimeout(()=>{ doRender(); if(typeof batchShown==="function" && batchShown()) refreshBatch(true); }, 220); }
 async function doRender(){
   try{
     const r = await fetch("/api/render", {method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify(buildSpec())});
@@ -340,8 +343,17 @@ $("#csvFile").onchange = async e=>{
   $("#tablePane").classList.remove("hidden"); $("#csvSearch").value="";
   $("#groupWrap").classList.toggle("hidden", !CSV.columns.includes("group"));
   $("#previewAllBtn").classList.remove("hidden");
+  $("#closeCsvBtn").classList.remove("hidden");
   $("#batchBtn").classList.add("hidden");
   renderCsvTable();
+};
+$("#closeCsvBtn").onclick = ()=>{
+  CSV=null; csvSel=new Set(); csvPrinted=new Set(); lastPreviewRows=[];
+  $("#csvFile").value=""; $("#csvInfo").textContent="";
+  $("#tablePane").classList.add("hidden");
+  ["previewAllBtn","batchBtn","closeCsvBtn","groupWrap"].forEach(id=>$("#"+id).classList.add("hidden"));
+  showGallery(false);
+  doRender();
 };
 function num(v,d){ const n=parseFloat(v); return isNaN(n)?d:n; }
 function truthy(v){ return v===1||v==="1"||v==="true"||v===true||String(v).toLowerCase()==="да"; }
@@ -355,10 +367,9 @@ function buildGroupedSpecs(rows){
     const lines=rs.map(r=>({text:r.text??"", bold:truthy(r.bold), align:r.align||"center",
       font:r.font||"DejaVu Sans", size_pt:num(r.size_pt,0)}));
     const f=rs[0];
-    // keep the selected label type (cable_flag / text / text_qr / ...); grouped rows
-    // just supply the multiline text + per-line formatting
-    specs.push({...base, lines,
-      tape_mm:num(f.tape_mm, base.tape_mm), line_spacing:num(f.line_spacing, base.line_spacing)});
+    // keep the selected label type + the live UI margin/line-spacing/diameter (base);
+    // grouped rows supply the multiline text, per-line formatting, and per-label tape.
+    specs.push({...base, lines, tape_mm:num(f.tape_mm, base.tape_mm)});
   }
   return specs;
 }
@@ -390,15 +401,15 @@ function renderCsvTable(){
     CSV.columns.map(c=>`<td title="${String(r[c]??"").replace(/"/g,'&quot;')}">${String(r[c]??"")}</td>`).join("")+`</tr>`).join("");
   $("#csvTableWrap").innerHTML=`<table><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table>`;
   $("#selInfo").textContent = `Показано ${filt.length} · выбрано ${csvSel.size||"- (весь фильтр)"}`;
-  $("#csvAll").onchange=e=>{ filt.forEach(r=> e.target.checked? csvSel.add(r.__i):csvSel.delete(r.__i)); renderCsvTable(); };
+  $("#csvAll").onchange=e=>{ filt.forEach(r=> e.target.checked? csvSel.add(r.__i):csvSel.delete(r.__i)); renderCsvTable(); if(batchShown())refreshBatch(true); };
   $("#csvTableWrap").querySelectorAll("th[data-c]").forEach(th=>th.onclick=()=>{
     const c=th.dataset.c; if(csvSort.col===c) csvSort.dir*=-1; else {csvSort.col=c; csvSort.dir=1;} renderCsvTable(); });
   $("#csvTableWrap").querySelectorAll("tbody tr").forEach(tr=>{
     const i=+tr.dataset.i;
-    tr.querySelector(".rowchk").onchange=e=>{ e.target.checked? csvSel.add(i):csvSel.delete(i); renderCsvTable(); };
+    tr.querySelector(".rowchk").onchange=e=>{ e.target.checked? csvSel.add(i):csvSel.delete(i); renderCsvTable(); if(batchShown())refreshBatch(true); };
   });
 }
-$("#csvSearch").oninput = ()=>renderCsvTable();
+$("#csvSearch").oninput = ()=>{ renderCsvTable(); if(batchShown()) refreshBatch(true); };
 function showGallery(on){
   $("#batchGallery").classList.toggle("hidden", !on);  // gallery fills the main preview area
   $("#preview").style.display = on ? "none" : "";
@@ -406,16 +417,17 @@ function showGallery(on){
 let csvPrinted = new Set();     // original indices already printed
 let lastPreviewRows = [];       // rows shown in the gallery (for marking printed)
 const grouped = ()=> $("#groupMode").checked && CSV && CSV.columns.includes("group");
-$("#previewAllBtn").onclick = async ()=>{
-  const rows=selectedRows(); if(!rows.length){ toast("Нет строк"); return; }
+const batchShown = ()=> !$("#batchGallery").classList.contains("hidden");
+async function refreshBatch(quiet){
+  const rows=selectedRows(); if(!rows.length){ if(!quiet) toast("Нет строк"); return; }
   lastPreviewRows = rows;
   let r;
   if(grouped()){
     const specs=buildGroupedSpecs(rows);
-    toast("Рендерю "+specs.length+" наклеек (группировка)...");
+    if(!quiet) toast("Рендерю "+specs.length+" наклеек (группировка)...");
     r = await fetch("/api/render_specs",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({specs})});
   } else {
-    toast("Рендерю "+rows.length+" наклеек...");
+    if(!quiet) toast("Рендерю "+rows.length+" наклеек...");
     r = await fetch("/api/render_batch",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({template:buildSpec(), rows})});
   }
   const j = await r.json();
@@ -425,8 +437,9 @@ $("#previewAllBtn").onclick = async ()=>{
   }).join("");
   showGallery(true);
   $("#batchBtn").classList.remove("hidden");
-  toast(`Предпросмотр: ${j.count}. Проверь и жми «Печать».`);
-};
+  if(!quiet) toast(`Предпросмотр: ${j.count}. Проверь и жми «Печать».`);
+}
+$("#previewAllBtn").onclick = ()=>refreshBatch(false);
 $("#batchBtn").onclick = async ()=>{
   const rows=selectedRows(); if(!rows.length) return;
   let r, j;
