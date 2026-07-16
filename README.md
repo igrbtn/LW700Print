@@ -112,8 +112,13 @@ tested here; the `O`/`W`/`t` tape-kind parameters and vendor "engage" requests d
 ## Notes & limitations
 
 - The LW-700 auto-powers-off when idle and drops off the USB bus; turn it back on.
-- The head has a small leading dead zone, so a short blank feed is added before the
-  content (tunable via the `lead` argument of `encode`).
+- The print head sits ~9 mm before the cutter, so labels get a standard ~9 mm margin
+  that cannot be printed into. It is applied symmetrically on both ends (`lead` /
+  `trail`, ~9 mm each) for a balanced look, with a single end-cut.
+- A leading cut / tape back-feed (to shrink that margin) is **not** implemented: any
+  extra or mid-job cut reliably powers this printer off, and the mechanism the stock
+  driver uses is not visible in the byte stream. Single end-cut is the reliable mode.
+- Tape width is auto-detected; the tool also runs without a printer (PNG preview).
 - This is an independent interoperability project. It contains **no Epson code or
   binaries**. "Epson" and "LabelWorks" are trademarks of Seiko Epson Corporation;
   this project is not affiliated with or endorsed by Epson.
