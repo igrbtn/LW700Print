@@ -1,0 +1,275 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LW700Print</title>
+<style>
+  :root {
+    --bg:#0f1115; --panel:#171a21; --panel2:#1e222b; --line:#2a2f3a;
+    --fg:#e6e9ef; --mut:#98a2b3; --acc:#4f8cff; --acc2:#2b6be0; --ok:#37c871; --warn:#f5a623;
+  }
+  * { box-sizing:border-box; }
+  body { margin:0; font:14px/1.4 -apple-system,Segoe UI,Roboto,sans-serif; background:var(--bg); color:var(--fg); }
+  header { display:flex; align-items:center; gap:14px; padding:10px 16px; background:var(--panel); border-bottom:1px solid var(--line); position:sticky; top:0; z-index:5; }
+  header h1 { font-size:15px; margin:0; font-weight:650; letter-spacing:.2px; }
+  header .sp { flex:1; }
+  .badge { font-size:12px; padding:4px 10px; border-radius:20px; background:var(--panel2); color:var(--mut); border:1px solid var(--line); }
+  .badge.on { color:var(--ok); border-color:#1f5f3a; }
+  .badge.off { color:var(--warn); border-color:#5f4a1f; }
+  main { display:grid; grid-template-columns:minmax(360px,440px) 1fr; gap:0; height:calc(100vh - 49px); }
+  .editor { overflow-y:auto; padding:14px 16px; border-right:1px solid var(--line); }
+  .stage { display:flex; flex-direction:column; }
+  .stageTop { padding:14px 16px; border-bottom:1px solid var(--line); display:flex; align-items:center; gap:12px; }
+  .preview { flex:1; display:flex; align-items:center; justify-content:center; overflow:auto; padding:24px; background:
+    repeating-conic-gradient(#14161c 0% 25%, #10121722 0% 50%) 50% / 22px 22px; }
+  .preview img { image-rendering:pixelated; background:#fff; box-shadow:0 8px 40px #0008; max-width:96%; }
+  fieldset { border:1px solid var(--line); border-radius:10px; margin:0 0 14px; padding:12px; background:var(--panel); }
+  legend { padding:0 6px; color:var(--mut); font-size:12px; text-transform:uppercase; letter-spacing:.5px; }
+  label.f { display:block; margin:8px 0 4px; color:var(--mut); font-size:12px; }
+  input, select, button, textarea { font:inherit; color:var(--fg); }
+  input[type=text], input[type=number], select, textarea {
+    width:100%; background:var(--panel2); border:1px solid var(--line); border-radius:8px; padding:8px 10px; }
+  input[type=number]{ -moz-appearance:textfield; }
+  .row { display:flex; gap:8px; }
+  .row > * { flex:1; }
+  .chips { display:flex; gap:6px; flex-wrap:wrap; }
+  .chip { padding:6px 12px; border-radius:8px; background:var(--panel2); border:1px solid var(--line); cursor:pointer; font-size:13px; }
+  .chip.sel { background:var(--acc2); border-color:var(--acc); color:#fff; }
+  .line { border:1px solid var(--line); border-radius:8px; padding:8px; margin-bottom:8px; background:var(--panel2); }
+  .line .hd { display:flex; align-items:center; gap:8px; margin-bottom:6px; }
+  .line .hd b { font-size:12px; color:var(--mut); flex:1; }
+  .iconbtn { background:none; border:1px solid var(--line); border-radius:6px; width:26px; height:26px; cursor:pointer; color:var(--mut); }
+  .iconbtn:hover { border-color:var(--acc); color:var(--fg); }
+  .mini { display:flex; gap:6px; margin-top:6px; }
+  .mini select { flex:2; } .mini .sz { flex:1; }
+  .toggle { display:inline-flex; align-items:center; gap:6px; font-size:12px; color:var(--mut); cursor:pointer; }
+  button.primary { background:var(--acc2); border:1px solid var(--acc); border-radius:9px; padding:10px 18px; color:#fff; cursor:pointer; font-weight:600; }
+  button.primary:hover { background:var(--acc); }
+  button.ghost { background:var(--panel2); border:1px solid var(--line); border-radius:8px; padding:8px 12px; cursor:pointer; color:var(--fg); }
+  button.ghost:hover { border-color:var(--acc); }
+  .dims { color:var(--mut); font-size:12px; }
+  .hint { color:var(--mut); font-size:12px; margin-top:6px; }
+  .note { font-size:12px; color:var(--warn); margin-top:8px; }
+  #toast { position:fixed; bottom:18px; left:50%; transform:translateX(-50%); background:var(--panel2); border:1px solid var(--line); padding:10px 16px; border-radius:10px; opacity:0; transition:.25s; pointer-events:none; max-width:70vw; }
+  #toast.show { opacity:1; }
+  .csvbox { font-size:12px; color:var(--mut); }
+  table.csv { width:100%; border-collapse:collapse; font-size:12px; margin-top:8px; }
+  table.csv th,table.csv td { border:1px solid var(--line); padding:4px 6px; text-align:left; white-space:nowrap; }
+  .hidden { display:none; }
+</style>
+</head>
+<body>
+<header>
+  <h1>LW700Print</h1>
+  <span id="status" class="badge">проверка принтера...</span>
+  <span class="sp"></span>
+  <span id="dims" class="dims"></span>
+  <button class="primary" id="printBtn">Печать</button>
+</header>
+<main>
+  <section class="editor">
+    <fieldset>
+      <legend>Тип наклейки</legend>
+      <div class="chips" id="typeChips"></div>
+    </fieldset>
+
+    <fieldset>
+      <legend>Лента</legend>
+      <label class="f">Ширина ленты</label>
+      <div class="row">
+        <select id="tape"></select>
+        <button class="ghost" id="autoTape" title="Определить по принтеру">Авто</button>
+      </div>
+      <div class="row" style="margin-top:8px">
+        <div>
+          <label class="f">Длина</label>
+          <select id="lenMode">
+            <option value="auto">Авто (по содержимому)</option>
+            <option value="fixed">Фиксированная, мм</option>
+          </select>
+        </div>
+        <div>
+          <label class="f">Длина, мм</label>
+          <input type="number" id="lenMm" value="40" min="5" max="500" step="1">
+        </div>
+      </div>
+      <div class="row" style="margin-top:8px">
+        <div><label class="f">Поля, мм</label><input type="number" id="margin" value="3" min="0" max="30" step="0.5"></div>
+        <div><label class="f">&nbsp;</label><label class="toggle"><input type="checkbox" id="invert"> Инверсия (белым по чёрному)</label></div>
+      </div>
+    </fieldset>
+
+    <fieldset id="textFs">
+      <legend>Строки (1-8)</legend>
+      <div id="lines"></div>
+      <button class="ghost" id="addLine">+ строка</button>
+    </fieldset>
+
+    <fieldset id="codeFs" class="hidden">
+      <legend>Код</legend>
+      <label class="f">Данные (QR / штрихкод)</label>
+      <input type="text" id="codeData" placeholder="https://... или 1234567890">
+      <div class="row" style="margin-top:8px">
+        <div><label class="f">Тип штрихкода</label><select id="barcodeType"></select></div>
+        <div><label class="f">&nbsp;</label><label class="toggle"><input type="checkbox" id="showCodeText" checked> Подпись под кодом</label></div>
+      </div>
+      <div class="hint">Для QR подпись берётся из первой строки (тип «текст+QR» или «QR»).</div>
+    </fieldset>
+
+    <fieldset>
+      <legend>Импорт из CSV (пакетная печать)</legend>
+      <input type="file" id="csvFile" accept=".csv">
+      <div id="csvInfo" class="csvbox"></div>
+      <div id="csvPreview"></div>
+      <button class="ghost hidden" id="batchBtn" style="margin-top:8px">Печать всех строк</button>
+      <div class="hint">Подставляй колонки в текст строк как <code>{Имя_колонки}</code>. Текущие строки = шаблон.</div>
+    </fieldset>
+  </section>
+
+  <section class="stage">
+    <div class="stageTop">
+      <b style="font-weight:600">Превью</b>
+      <span id="dims2" class="dims"></span>
+      <span class="sp" style="flex:1"></span>
+      <button class="ghost" id="refreshBtn">Обновить</button>
+    </div>
+    <div class="preview"><img id="preview" alt="preview"></div>
+    <div id="note" class="note" style="padding:0 16px 14px"></div>
+  </section>
+</main>
+<div id="toast"></div>
+
+<script>
+const $ = s => document.querySelector(s);
+let META = null, TYPE = "text";
+
+function toast(msg, ms=2600){ const t=$("#toast"); t.textContent=msg; t.classList.add("show"); clearTimeout(t._t); t._t=setTimeout(()=>t.classList.remove("show"), ms); }
+
+async function loadMeta(){
+  META = await (await fetch("/api/meta")).json();
+  const tape = $("#tape"); tape.innerHTML = META.tapes.map(t=>`<option value="${t.mm}">${t.mm} мм (${t.dots} точек)</option>`).join("");
+  tape.value = 18;
+  $("#barcodeType").innerHTML = META.barcode_types.map(b=>`<option>${b}</option>`).join("");
+  const labels = {text:"Текст", qr:"QR", barcode:"Штрихкод", text_qr:"Текст + QR"};
+  $("#typeChips").innerHTML = META.label_types.map(t=>`<span class="chip ${t===TYPE?'sel':''}" data-t="${t}">${labels[t]||t}</span>`).join("");
+  $("#typeChips").querySelectorAll(".chip").forEach(c=>c.onclick=()=>{ TYPE=c.dataset.t; $("#typeChips").querySelectorAll(".chip").forEach(x=>x.classList.toggle("sel", x===c)); applyTypeUI(); scheduleRender(); });
+  addLine("LW-700");
+  applyTypeUI();
+}
+
+function applyTypeUI(){
+  const showText = (TYPE==="text"||TYPE==="qr"||TYPE==="text_qr");
+  const showCode = (TYPE==="qr"||TYPE==="barcode"||TYPE==="text_qr");
+  $("#textFs").classList.toggle("hidden", !showText);
+  $("#codeFs").classList.toggle("hidden", !showCode);
+}
+
+function fontOptions(sel){ return META.fonts.map(f=>`<option ${f===sel?'selected':''}>${f}</option>`).join(""); }
+
+function addLine(text=""){
+  const lines = $("#lines");
+  if (lines.children.length >= META.max_lines){ toast("Максимум 8 строк"); return; }
+  const idx = lines.children.length+1;
+  const div = document.createElement("div");
+  div.className = "line";
+  div.innerHTML = `
+    <div class="hd"><b>Строка ${idx}</b>
+      <button class="iconbtn up" title="Выше">↑</button>
+      <button class="iconbtn dn" title="Ниже">↓</button>
+      <button class="iconbtn del" title="Удалить">✕</button>
+    </div>
+    <input type="text" class="tx" placeholder="Текст строки" value="${text.replace(/"/g,'&quot;')}">
+    <div class="mini">
+      <select class="ft">${fontOptions(META.fonts[0])}</select>
+      <input type="number" class="sz" title="Размер pt (0=авто)" value="0" min="0" max="200" step="1">
+      <select class="al"><option value="left">◧</option><option value="center" selected>▣</option><option value="right">◨</option></select>
+      <label class="toggle"><input type="checkbox" class="bd"> B</label>
+    </div>`;
+  lines.appendChild(div);
+  div.querySelectorAll("input,select").forEach(el=>{ el.oninput=scheduleRender; el.onchange=scheduleRender; });
+  div.querySelector(".del").onclick=()=>{ if(lines.children.length>1){div.remove(); renumber(); scheduleRender();} };
+  div.querySelector(".up").onclick=()=>{ if(div.previousElementSibling){lines.insertBefore(div,div.previousElementSibling); renumber(); scheduleRender();} };
+  div.querySelector(".dn").onclick=()=>{ if(div.nextElementSibling){lines.insertBefore(div.nextElementSibling,div); renumber(); scheduleRender();} };
+  renumber();
+}
+function renumber(){ $("#lines").querySelectorAll(".line b").forEach((b,i)=>b.textContent="Строка "+(i+1)); }
+
+function collectLines(){
+  return [...$("#lines").querySelectorAll(".line")].map(d=>({
+    text:d.querySelector(".tx").value, font:d.querySelector(".ft").value,
+    size_pt:+d.querySelector(".sz").value, bold:d.querySelector(".bd").checked,
+    align:d.querySelector(".al").value }));
+}
+
+function buildSpec(){
+  return {
+    tape_mm:+$("#tape").value, label_type:TYPE, lines:collectLines(),
+    length_mode:$("#lenMode").value, length_mm:+$("#lenMm").value, margin_mm:+$("#margin").value,
+    code_data:$("#codeData").value, barcode_type:$("#barcodeType").value,
+    show_code_text:$("#showCodeText").checked, invert:$("#invert").checked };
+}
+
+let renderTimer=null;
+function scheduleRender(){ clearTimeout(renderTimer); renderTimer=setTimeout(doRender, 180); }
+async function doRender(){
+  try{
+    const r = await fetch("/api/render", {method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify(buildSpec())});
+    if(!r.ok){ toast("Ошибка рендера"); return; }
+    const dots=r.headers.get("X-Label-Dots"), mm=r.headers.get("X-Label-Mm");
+    const blob = await r.blob();
+    $("#preview").src = URL.createObjectURL(blob);
+    const d = `${dots} точек · ~${mm} мм`; $("#dims").textContent=d; $("#dims2").textContent=d;
+  }catch(e){ toast("Сбой: "+e); }
+}
+
+async function checkStatus(){
+  try{
+    const s = await (await fetch("/api/status")).json();
+    const b=$("#status");
+    b.className = "badge "+(s.connected?"on":"off");
+    b.textContent = s.connected ? (s.tape_mm?`принтер: лента ${s.tape_mm}мм`:"принтер подключён") : "принтер не найден";
+    b.title = s.detail;
+    if(s.connected && s.tape_mm){ $("#tape").value=s.tape_mm; scheduleRender(); }
+  }catch(e){ $("#status").textContent="статус недоступен"; }
+}
+
+async function doPrint(){
+  const r = await fetch("/api/print", {method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({...buildSpec(), use_usb:true})});
+  const j = await r.json();
+  toast(j.message || "готово");
+  $("#note").textContent = j.note ? "⚠ "+j.note : "";
+}
+
+// CSV
+let CSV = null;
+$("#csvFile").onchange = async e=>{
+  const f=e.target.files[0]; if(!f) return;
+  const fd=new FormData(); fd.append("file", f);
+  const j = await (await fetch("/api/csv",{method:"POST",body:fd})).json();
+  CSV = j;
+  $("#csvInfo").textContent = `${j.count} строк, колонки: ${j.columns.join(", ")}`;
+  const head = j.columns.map(c=>`<th>${c}</th>`).join("");
+  const body = j.rows.slice(0,5).map(r=>`<tr>${j.columns.map(c=>`<td>${(r[c]??"").toString().slice(0,24)}</td>`).join("")}</tr>`).join("");
+  $("#csvPreview").innerHTML = `<table class="csv"><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table>`;
+  $("#batchBtn").classList.remove("hidden");
+};
+$("#batchBtn").onclick = async ()=>{
+  if(!CSV){ return; }
+  const template = buildSpec();
+  const r = await fetch("/api/print_batch",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({template, rows:CSV.rows})});
+  const j = await r.json();
+  toast(`Пакет: ${j.count} наклеек обработано`);
+};
+
+// wire global controls
+["#tape","#lenMode","#lenMm","#margin","#invert","#codeData","#barcodeType","#showCodeText"].forEach(s=>{ const el=$(s); el.oninput=scheduleRender; el.onchange=scheduleRender; });
+$("#addLine").onclick=()=>addLine("");
+$("#printBtn").onclick=doPrint;
+$("#refreshBtn").onclick=doRender;
+$("#autoTape").onclick=checkStatus;
+
+(async()=>{ await loadMeta(); await checkStatus(); doRender(); setInterval(checkStatus, 8000); })();
+</script>
+</body>
+</html>

@@ -1,0 +1,147 @@
+#!/usr/bin/env python3
+"""LW700Print web UI launcher.
+
+    python app.py            # launch server, open browser
+    python app.py --no-open  # server only
+    python app.py --port 8099
+
+The editor renders labels through the same bitmap pipeline that will feed the
+USB printer. Until the ESCPL2 protocol is decoded, "Print" falls back to saving
+the exact print bitmap as PNG (output/).
+"""
+import argparse
+import csv
+import io
+import os
+import sys
+import threading
+import webbrowser
+
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "src"))
+
+from fastapi import FastAPI, Request, UploadFile  # noqa: E402
+from fastapi.responses import HTMLResponse, JSONResponse, Response  # noqa: E402
+from fastapi.staticfiles import StaticFiles  # noqa: E402
+
+from lw700 import backends, fonts, render  # noqa: E402
+from lw700.spec import MAX_LINES, MIN_LINES, TAPES  # noqa: E402
+
+HERE = os.path.dirname(os.path.abspath(__file__))
+STATIC = os.path.join(HERE, "static")
+OUTPUT = os.path.join(HERE, "output")
+
+app = FastAPI(title="LW700Print")
+
+
+@app.get("/", response_class=HTMLResponse)
+def index():
+    with open(os.path.join(STATIC, "index.html"), encoding="utf-8") as f:
+        return f.read()
+
+
+@app.get("/api/meta")
+def meta():
+    return {
+        "fonts": fonts.available_fonts(),
+        "tapes": [{"mm": t.width_mm, "dots": t.printable_dots} for t in TAPES.values()],
+        "min_lines": MIN_LINES,
+        "max_lines": MAX_LINES,
+        "label_types": ["text", "qr", "barcode", "text_qr"],
+        "barcode_types": ["code128", "code39", "ean13", "ean8", "upca", "isbn13"],
+        "aligns": ["left", "center", "right"],
+    }
+
+
+@app.get("/api/status")
+def status():
+    st = backends.detect_status()
+    return {"connected": st.connected, "tape_mm": st.tape_mm, "detail": st.detail}
+
+
+@app.post("/api/render")
+async def api_render(request: Request):
+    spec = render.LabelSpec.from_dict(await request.json())
+    img = render.render(spec)
+    png = render.to_png_bytes(img, scale=3)
+    return Response(
+        content=png,
+        media_type="image/png",
+        headers={"X-Label-Dots": f"{img.width}x{img.height}",
+                 "X-Label-Mm": f"{img.width / 180 * 25.4:.1f}x{spec.tape_mm}"},
+    )
+
+
+@app.post("/api/print")
+async def api_print(request: Request):
+    data = await request.json()
+    spec = render.LabelSpec.from_dict(data)
+    img = render.render(spec)
+    prefer_usb = bool(data.get("use_usb", True))
+    backend = backends.get_backend(prefer_usb, OUTPUT)
+    try:
+        msg = backend.print_label(img, tape_mm=spec.tape_mm)
+        return {"ok": True, "backend": backend.name, "message": msg}
+    except backends.NotReady as e:
+        pv = backends.PreviewBackend(OUTPUT)
+        msg = pv.print_label(img, tape_mm=spec.tape_mm)
+        return {"ok": True, "backend": "preview", "message": f"{msg}", "note": str(e)}
+
+
+@app.post("/api/csv")
+async def api_csv(file: UploadFile):
+    raw = (await file.read()).decode("utf-8-sig", errors="replace")
+    reader = csv.DictReader(io.StringIO(raw))
+    rows = list(reader)[:1000]
+    return {"columns": reader.fieldnames or [], "rows": rows, "count": len(rows)}
+
+
+@app.post("/api/print_batch")
+async def api_print_batch(request: Request):
+    data = await request.json()
+    template = data.get("template", {})
+    rows = data.get("rows", [])
+    results = []
+    pv = backends.PreviewBackend(OUTPUT)
+    for row in rows[:1000]:
+        spec_dict = _apply_template(template, row)
+        spec = render.LabelSpec.from_dict(spec_dict)
+        img = render.render(spec)
+        results.append(pv.print_label(img, tape_mm=spec.tape_mm))
+    return {"ok": True, "count": len(results), "results": results}
+
+
+def _apply_template(template: dict, row: dict) -> dict:
+    def sub(s):
+        if not isinstance(s, str):
+            return s
+        for k, v in row.items():
+            s = s.replace("{" + k + "}", str(v))
+        return s
+
+    out = dict(template)
+    out["lines"] = [
+        {**ln, "text": sub(ln.get("text", ""))} for ln in template.get("lines", [])
+    ]
+    out["code_data"] = sub(template.get("code_data", ""))
+    return out
+
+
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--port", type=int, default=8099)
+    ap.add_argument("--host", default="127.0.0.1")
+    ap.add_argument("--no-open", action="store_true")
+    args = ap.parse_args()
+
+    os.makedirs(OUTPUT, exist_ok=True)
+    url = f"http://{args.host}:{args.port}/"
+    if not args.no_open:
+        threading.Timer(1.0, lambda: webbrowser.open(url)).start()
+    print(f"LW700Print UI -> {url}")
+
+    import uvicorn
+    uvicorn.run(app, host=args.host, port=args.port, log_level="warning")
+
+
+if __name__ == "__main__":
+    main()

@@ -1,0 +1,23 @@
+# Python
+venv/
+__pycache__/
+*.pyc
+*.egg-info/
+
+# runtime output
+output/
+captures/
+
+# proprietary Epson binaries & captured data - NEVER publish (copyright)
+research/
+
+# reverse-engineering / capture tooling tied to the author's private setup
+tools/*.ps1
+tools/win.py
+tools/pull_driver.py
+tools/parse_capture.py
+tools/dump_cap_b64.ps1
+
+.DS_Store
+tools/run_filter.py
+tools/engage_sweep.py
