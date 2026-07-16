@@ -150,30 +150,25 @@ class USBBackend(PrinterBackend):
 
 
 def cut_tape() -> str:
-    """Send a minimal feed + cut to the printer (manual cut button)."""
+    """Manual cut: print a tiny real label with the normal job structure, then cut.
+
+    Bare/short jobs power the printer off; only a full-structure print (standard lead,
+    density, single end-cut) is safe, so encode a tiny mark image the normal way.
+    """
     import time
+
+    from PIL import Image
 
     import usb.core
     import usb.util
 
-    from .escpl2 import _cmd, _raster_line, CUT_EACH_JOB, INIT
+    from .escpl2 import encode
 
-    # A blank-only job faults the cutter and powers the printer off; a real print
-    # (even one dot) followed by the EachJob cut works. So print a single dot + cut.
-    dots = 76
-    line_bytes = (dots + 7) // 8
-    blank = bytes(line_bytes)
-    dot = bytes([0x80]) + bytes(line_bytes - 1)  # one black pixel
-    out = bytearray(INIT)
-    out += _cmd(0x43, CUT_EACH_JOB) + _cmd(0x44, bytes([3 + 5])) + _cmd(0x47) + _cmd(0x73, b"\x00")
-    out += _cmd(0x4C, (40).to_bytes(4, "little")) + _cmd(0x54, dots.to_bytes(2, "little"))
-    out += _cmd(0x4F, b"\x00\x00") + _cmd(0x57, b"\x00\x00") + _cmd(0x74, b"\x00\x00\x00")
-    for _ in range(20):
-        out += _raster_line(blank, dots)
-    out += _raster_line(dot, dots)          # one real printed dot so the cut is valid
-    for _ in range(6):
-        out += _raster_line(blank, dots)
-    out += bytes([0x0C]) + _cmd(0x40)
+    # image is (width = length along tape, height = tape dots); keep it short
+    img = Image.new("1", (10, 76), 1)
+    for y in range(30, 46):
+        img.putpixel((4, y), 0)           # a short mark so the print is a valid job
+    out = encode(img)                     # normal structure: lead/trail + single cut
 
     dev = None
     for _ in range(6):
