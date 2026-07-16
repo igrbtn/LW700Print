@@ -44,12 +44,13 @@ CUT_EACH_PAGE = b"\x02\x02\x01\x01"  # dword 0x1010202
 # 180 dpi: ~7 dots per mm. The thermal head has a leading dead zone, so blank feed
 # is printed before the content or the first millimetres clip. ~7 mm (50 dots) is
 # the smallest lead that reliably clears it; the auto-cut trims this leader.
-# NOTE: extra cuts (an EachPage mid-job cut, or a separate leading-cut job) reliably
-# power the LW-700 off, so this uses a single end-cut (EachJob). The 'D' density fix
-# alone clears the cold-head leading gaps, so no warm-up strip is needed by default
-# (set warmup > 0 to add one). A ~7 mm blank lead clears the head-to-cutter gap.
+# The head sits ~9 mm before the cutter, so the printer cannot print in the first
+# ~9 mm after a cut edge - that margin is standard on this hardware. Extra/leading
+# cuts (mid-job or a separate trim job) reliably power the LW-700 off, so we accept
+# the 9 mm and make it symmetric on both ends (lead == trail == 64 dots ~= 9 mm) with
+# a single end-cut. The 'D' density fix clears the cold-head gaps (no warm-up needed).
 def encode(img: Image.Image, *, minimal: bool = False, cut: bytes = CUT_EACH_JOB,
-           rotate: int = 270, lead: int = 50, trail: int = 24,
+           rotate: int = 270, lead: int = 64, trail: int = 64,
            density: int = 4, warmup: int = 0, warmup_page: bool = False) -> bytes:
     """Encode a 1-bit PIL image to ESCPL2 for the LW-700.
 
