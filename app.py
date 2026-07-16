@@ -31,6 +31,7 @@ STATIC = os.path.join(HERE, "static")
 OUTPUT = os.path.join(HERE, "output")
 
 app = FastAPI(title="LW700Print")
+_stop = {"flag": False}
 
 
 @app.get("/", response_class=HTMLResponse)
@@ -56,7 +57,8 @@ def meta():
 @app.get("/api/status")
 def status():
     st = backends.detect_status()
-    return {"connected": st.connected, "tape_mm": st.tape_mm, "detail": st.detail}
+    return {"connected": st.connected, "tape_mm": st.tape_mm, "detail": st.detail,
+            "media_ok": st.media_ok, "raw": st.raw}
 
 
 @app.post("/api/render")
@@ -96,19 +98,60 @@ async def api_csv(file: UploadFile):
     return {"columns": reader.fieldnames or [], "rows": rows, "count": len(rows)}
 
 
+@app.post("/api/cut")
+def api_cut():
+    try:
+        return {"ok": True, "message": backends.cut_tape()}
+    except Exception as e:  # noqa: BLE001 - report any USB/printer error to the UI
+        return {"ok": False, "message": str(e)}
+
+
+@app.post("/api/stop")
+def api_stop():
+    _stop["flag"] = True
+    return {"ok": True}
+
+
+@app.post("/api/render_batch")
+async def api_render_batch(request: Request):
+    import base64
+    data = await request.json()
+    template = data.get("template", {})
+    rows = data.get("rows", [])
+    items = []
+    for i, row in enumerate(rows[:1000]):
+        spec = render.LabelSpec.from_dict(_apply_template(template, row))
+        img = render.render(spec)
+        png = render.to_png_bytes(img, scale=2)
+        items.append({
+            "index": i,
+            "png": "data:image/png;base64," + base64.b64encode(png).decode(),
+            "mm": round(img.width / 180 * 25.4, 1),
+            "tape_mm": spec.tape_mm,
+        })
+    return {"count": len(items), "items": items}
+
+
 @app.post("/api/print_batch")
 async def api_print_batch(request: Request):
     data = await request.json()
     template = data.get("template", {})
     rows = data.get("rows", [])
+    prefer_usb = bool(data.get("use_usb", True))
+    _stop["flag"] = False
     results = []
-    pv = backends.PreviewBackend(OUTPUT)
-    for row in rows[:1000]:
-        spec_dict = _apply_template(template, row)
-        spec = render.LabelSpec.from_dict(spec_dict)
+    for i, row in enumerate(rows[:1000]):
+        if _stop["flag"]:
+            results.append(f"STOPPED after {i}")
+            break
+        spec = render.LabelSpec.from_dict(_apply_template(template, row))
         img = render.render(spec)
-        results.append(pv.print_label(img, tape_mm=spec.tape_mm))
-    return {"ok": True, "count": len(results), "results": results}
+        backend = backends.get_backend(prefer_usb, OUTPUT)
+        try:
+            results.append(backend.print_label(img, tape_mm=spec.tape_mm))
+        except backends.NotReady:
+            results.append(backends.PreviewBackend(OUTPUT).print_label(img, tape_mm=spec.tape_mm))
+    return {"ok": True, "count": len(results), "results": results, "stopped": _stop["flag"]}
 
 
 def _apply_template(template: dict, row: dict) -> dict:

@@ -1,0 +1,9 @@
+group,line,text,bold,align,font,size_pt,line_spacing,tape_mm
+SRV-WEB-01,1,SRV-WEB-01,1,center,DejaVu Sans,0,0.35,18
+SRV-WEB-01,2,10.0.10.11,0,center,DejaVu Sans Mono,0,0.35,18
+SRV-WEB-01,3,R1-U20 / PSU-A,0,center,DejaVu Sans,0,0.35,18
+SRV-DB-01,1,SRV-DB-01,1,center,DejaVu Sans,0,0.35,18
+SRV-DB-01,2,10.0.20.11,0,center,DejaVu Sans Mono,0,0.35,18
+SRV-DB-01,3,R2-U30 / PSU-B,0,center,DejaVu Sans,0,0.35,18
+FW-01,1,FW-01,1,left,DejaVu Sans,0,0.4,18
+FW-01,2,Fortigate 200F,0,left,DejaVu Sans,0,0.4,18

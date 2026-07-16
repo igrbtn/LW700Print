@@ -29,6 +29,8 @@ class PrinterStatus:
     connected: bool
     tape_mm: int | None  # None until the status handshake is decoded
     detail: str
+    media_ok: bool | None = None   # tentative: tape present / no error
+    raw: str = ""                  # raw status bytes for debugging
 
 
 # GetLWStatus (0xC1,0x01) byte[3] encodes the loaded tape width.
@@ -49,17 +51,26 @@ def detect_status() -> PrinterStatus:
     if dev is None:
         return PrinterStatus(False, None, "LW-700 not found on USB")
     tape_mm = None
+    media_ok = None
     detail = "LW-700 connected"
+    raw = ""
     try:
         st = bytes(dev.ctrl_transfer(0xC1, 0x01, 0, 0, 64, timeout=1500))
+        raw = st.hex()
         if len(st) > 3:
             code = st[3]
             tape_mm = TAPE_CODE_MM.get(code)
-            detail = (f"LW-700 connected, tape {tape_mm}mm" if tape_mm
-                      else f"LW-700 connected, tape code 0x{code:02x} (unknown width)")
+            # tape code 0 => no cassette / no tape (tentative)
+            media_ok = code != 0
+            if tape_mm:
+                detail = f"LW-700 connected, tape {tape_mm}mm"
+            elif code == 0:
+                detail = "LW-700 connected, NO TAPE / cover open"
+            else:
+                detail = f"LW-700 connected, tape code 0x{code:02x}"
     except Exception:  # noqa: BLE001 - status read is best-effort
         pass
-    return PrinterStatus(True, tape_mm, detail)
+    return PrinterStatus(True, tape_mm, detail, media_ok, raw)
 
 
 class PrinterBackend:
@@ -136,6 +147,54 @@ class USBBackend(PrinterBackend):
             usb.util.release_interface(dev, intf.bInterfaceNumber)
             usb.util.dispose_resources(dev)
         return f"printed {tape_mm}mm label ({written} bytes ESCPL2)"
+
+
+def cut_tape() -> str:
+    """Send a minimal feed + cut to the printer (manual cut button)."""
+    import time
+
+    import usb.core
+    import usb.util
+
+    from .escpl2 import _cmd, _raster_line, CUT_EACH_JOB, INIT
+
+    dots = 76
+    line_bytes = (dots + 7) // 8
+    blank = bytes(line_bytes)
+    out = bytearray(INIT)
+    out += _cmd(0x43, CUT_EACH_JOB) + _cmd(0x44, bytes([3 + 5])) + _cmd(0x47) + _cmd(0x73, b"\x00")
+    out += _cmd(0x4C, (40).to_bytes(4, "little")) + _cmd(0x54, dots.to_bytes(2, "little"))
+    out += _cmd(0x4F, b"\x00\x00") + _cmd(0x57, b"\x00\x00") + _cmd(0x74, b"\x00\x00\x00")
+    for _ in range(40):
+        out += _raster_line(blank, dots)
+    out += bytes([0x0C]) + _cmd(0x40)
+
+    dev = None
+    for _ in range(6):
+        dev = usb.core.find(idVendor=VID, idProduct=PID)
+        if dev is not None:
+            break
+        time.sleep(0.5)
+    if dev is None:
+        raise NotReady("LW-700 not found")
+    try:
+        dev.set_configuration()
+    except usb.core.USBError:
+        pass
+    cfg = dev.get_active_configuration()
+    intf = next((i for i in cfg if i.bInterfaceClass == 7), cfg[(0, 0)])
+    ep = next(e for e in intf
+              if usb.util.endpoint_direction(e.bEndpointAddress) == usb.util.ENDPOINT_OUT)
+    try:
+        usb.util.claim_interface(dev, intf.bInterfaceNumber)
+    except usb.core.USBError:
+        pass
+    try:
+        ep.write(bytes(out), timeout=8000)
+    finally:
+        usb.util.release_interface(dev, intf.bInterfaceNumber)
+        usb.util.dispose_resources(dev)
+    return "cut sent"
 
 
 def get_backend(prefer_usb: bool, out_dir: str) -> PrinterBackend:

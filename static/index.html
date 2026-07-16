@@ -57,6 +57,23 @@
   table.csv { width:100%; border-collapse:collapse; font-size:12px; margin-top:8px; }
   table.csv th,table.csv td { border:1px solid var(--line); padding:4px 6px; text-align:left; white-space:nowrap; }
   .hidden { display:none; }
+  #batchGallery { flex:1; overflow:auto; padding:16px; display:flex; flex-direction:column; gap:10px; align-content:start; }
+  .gcard { background:var(--panel); border:1px solid var(--line); border-radius:8px; padding:8px 10px; }
+  .gcard .gm { color:var(--mut); font-size:12px; margin-bottom:6px; display:flex; gap:10px; align-items:center; }
+  .gcard .gimg { overflow-x:auto; background:#fff; border-radius:4px; padding:4px; }
+  .gcard img { height:64px; width:auto; image-rendering:pixelated; display:block; }
+  .gcard.printed { opacity:.5; } .gcard.printed .gm::after { content:"✓ напечатано"; color:var(--ok); }
+  #galleryBar { display:none; padding:10px 16px; border-bottom:1px solid var(--line); align-items:center; gap:12px; }
+  #galleryBar.show { display:flex; }
+  #csvTableWrap table { width:100%; border-collapse:collapse; font-size:12px; }
+  #csvTableWrap th { position:sticky; top:0; background:var(--panel2); cursor:pointer; user-select:none; padding:5px 6px; border:1px solid var(--line); white-space:nowrap; }
+  #csvTableWrap th:hover { color:var(--acc); }
+  #csvTableWrap td { padding:3px 6px; border:1px solid var(--line); white-space:nowrap; max-width:180px; overflow:hidden; text-overflow:ellipsis; }
+  #csvTableWrap tr.sel { background:#4f8cff22; }
+  #csvTableWrap td.chk, #csvTableWrap th.chk { width:22px; text-align:center; padding:3px; }
+  #csvTableWrap tr { cursor:default; }
+  #csvTableWrap tr.prt { opacity:.5; }
+  #csvTableWrap td.pf, #csvTableWrap th.pf { width:18px; text-align:center; color:var(--ok); padding:3px; }
 </style>
 </head>
 <body>
@@ -65,6 +82,8 @@
   <span id="status" class="badge">проверка принтера...</span>
   <span class="sp"></span>
   <span id="dims" class="dims"></span>
+  <button class="ghost" id="cutBtn">Обрез</button>
+  <button class="ghost" id="stopBtn">Стоп</button>
   <button class="primary" id="printBtn">Печать</button>
 </header>
 <main>
@@ -155,9 +174,14 @@
       <legend>Импорт из CSV (пакетная печать)</legend>
       <input type="file" id="csvFile" accept=".csv">
       <div id="csvInfo" class="csvbox"></div>
-      <div id="csvPreview"></div>
-      <button class="ghost hidden" id="batchBtn" style="margin-top:8px">Печать всех строк</button>
-      <div class="hint">Подставляй колонки в текст строк как <code>{Имя_колонки}</code>. Текущие строки = шаблон.</div>
+      <input type="text" id="csvSearch" class="hidden" placeholder="Поиск / фильтр по всем колонкам..." style="margin-top:8px">
+      <div id="csvTableWrap" style="max-height:280px; overflow:auto; margin-top:8px"></div>
+      <div id="selInfo" class="csvbox" style="margin-top:6px"></div>
+      <div class="row" style="margin-top:8px">
+        <button class="ghost hidden" id="previewAllBtn">Предпросмотр</button>
+        <button class="primary hidden" id="batchBtn">Печать</button>
+      </div>
+      <div class="hint">Подставляй колонки как <code>{Имя_колонки}</code>. Клик по заголовку - сортировка. Галочки - выбор строк (если ничего не выбрано, берётся весь фильтр). Предпросмотр -> печать.</div>
     </fieldset>
 
     <fieldset>
@@ -180,6 +204,7 @@
       <button class="ghost" id="refreshBtn">Обновить</button>
     </div>
     <div class="preview"><img id="preview" alt="preview"></div>
+    <div id="batchGallery" class="hidden"></div>
     <div id="note" class="note" style="padding:0 16px 14px"></div>
   </section>
 </main>
@@ -293,25 +318,88 @@ async function doPrint(){
   $("#note").textContent = j.note ? "⚠ "+j.note : "";
 }
 
-// CSV
+// CSV interactive table: search, sort, select
 let CSV = null;
+let csvSort = {col:null, dir:1};
+let csvSel = new Set();
 $("#csvFile").onchange = async e=>{
   const f=e.target.files[0]; if(!f) return;
   const fd=new FormData(); fd.append("file", f);
   const j = await (await fetch("/api/csv",{method:"POST",body:fd})).json();
-  CSV = j;
-  $("#csvInfo").textContent = `${j.count} строк, колонки: ${j.columns.join(", ")}`;
-  const head = j.columns.map(c=>`<th>${c}</th>`).join("");
-  const body = j.rows.slice(0,5).map(r=>`<tr>${j.columns.map(c=>`<td>${(r[c]??"").toString().slice(0,24)}</td>`).join("")}</tr>`).join("");
-  $("#csvPreview").innerHTML = `<table class="csv"><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table>`;
+  j.rows.forEach((r,i)=>r.__i=i);
+  CSV = j; csvSel = new Set(); csvSort={col:null,dir:1};
+  $("#csvInfo").textContent = `${j.count} строк · колонки: ${j.columns.join(", ")}`;
+  $("#csvSearch").classList.remove("hidden"); $("#csvSearch").value="";
+  $("#previewAllBtn").classList.remove("hidden");
+  $("#batchBtn").classList.add("hidden");
+  renderCsvTable();
+};
+function csvFiltered(){
+  if(!CSV) return [];
+  const q=$("#csvSearch").value.trim().toLowerCase();
+  let rows=CSV.rows.filter(r=>!q || CSV.columns.some(c=>String(r[c]??"").toLowerCase().includes(q)));
+  if(csvSort.col){ rows=[...rows].sort((a,b)=>{
+    const x=String(a[csvSort.col]??""), y=String(b[csvSort.col]??"");
+    const n=parseFloat(x)-parseFloat(y);
+    return (isNaN(n)? x.localeCompare(y) : n)*csvSort.dir; }); }
+  return rows;
+}
+function selectedRows(){
+  const filt=csvFiltered();
+  const sel=filt.filter(r=>csvSel.has(r.__i));
+  return sel.length? sel : filt;
+}
+function renderCsvTable(){
+  const filt=csvFiltered();
+  const arrow=c=> csvSort.col===c ? (csvSort.dir>0?" ▲":" ▼") : "";
+  const allSel=filt.length && filt.every(r=>csvSel.has(r.__i));
+  const head=`<th class="chk"><input type="checkbox" id="csvAll" ${allSel?"checked":""}></th>`+
+    `<th class="pf" title="напечатано">✓</th>`+
+    CSV.columns.map(c=>`<th data-c="${c}">${c}${arrow(c)}</th>`).join("");
+  const body=filt.map(r=>`<tr class="${csvSel.has(r.__i)?"sel":""} ${csvPrinted.has(r.__i)?"prt":""}" data-i="${r.__i}">`+
+    `<td class="chk"><input type="checkbox" class="rowchk" ${csvSel.has(r.__i)?"checked":""}></td>`+
+    `<td class="pf">${csvPrinted.has(r.__i)?"✓":""}</td>`+
+    CSV.columns.map(c=>`<td title="${String(r[c]??"").replace(/"/g,'&quot;')}">${String(r[c]??"")}</td>`).join("")+`</tr>`).join("");
+  $("#csvTableWrap").innerHTML=`<table><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table>`;
+  $("#selInfo").textContent = `Показано ${filt.length} · выбрано ${csvSel.size||"- (весь фильтр)"}`;
+  $("#csvAll").onchange=e=>{ filt.forEach(r=> e.target.checked? csvSel.add(r.__i):csvSel.delete(r.__i)); renderCsvTable(); };
+  $("#csvTableWrap").querySelectorAll("th[data-c]").forEach(th=>th.onclick=()=>{
+    const c=th.dataset.c; if(csvSort.col===c) csvSort.dir*=-1; else {csvSort.col=c; csvSort.dir=1;} renderCsvTable(); });
+  $("#csvTableWrap").querySelectorAll("tbody tr").forEach(tr=>{
+    const i=+tr.dataset.i;
+    tr.querySelector(".rowchk").onchange=e=>{ e.target.checked? csvSel.add(i):csvSel.delete(i); renderCsvTable(); };
+  });
+}
+$("#csvSearch").oninput = ()=>renderCsvTable();
+function showGallery(on){
+  $("#batchGallery").classList.toggle("hidden", !on);
+  $("#preview").classList.toggle("hidden", on);
+}
+let csvPrinted = new Set();     // original indices already printed
+let lastPreviewRows = [];       // rows shown in the gallery (for marking printed)
+$("#previewAllBtn").onclick = async ()=>{
+  const rows=selectedRows(); if(!rows.length){ toast("Нет строк"); return; }
+  lastPreviewRows = rows;
+  toast("Рендерю "+rows.length+" наклеек...");
+  const r = await fetch("/api/render_batch",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({template:buildSpec(), rows})});
+  const j = await r.json();
+  $("#batchGallery").innerHTML = j.items.map((it,k)=>{
+    const gi = rows[k] ? rows[k].__i : it.index;
+    return `<div class="gcard ${csvPrinted.has(gi)?'printed':''}"><div class="gm">#${it.index+1} · ~${it.mm}мм · ${it.tape_mm}мм лента</div><div class="gimg"><img src="${it.png}"></div></div>`;
+  }).join("");
+  showGallery(true);
   $("#batchBtn").classList.remove("hidden");
+  toast(`Предпросмотр: ${j.count}. Проверь и жми «Печать».`);
 };
 $("#batchBtn").onclick = async ()=>{
-  if(!CSV){ return; }
-  const template = buildSpec();
-  const r = await fetch("/api/print_batch",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({template, rows:CSV.rows})});
+  const rows=selectedRows(); if(!rows.length) return;
+  if(!confirm(`Отправить на печать ${rows.length} наклеек?`)) return;
+  const r = await fetch("/api/print_batch",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({template:buildSpec(), rows})});
   const j = await r.json();
-  toast(`Пакет: ${j.count} наклеек обработано`);
+  rows.forEach(r=>csvPrinted.add(r.__i));   // mark printed
+  renderCsvTable();
+  $("#batchGallery").querySelectorAll(".gcard").forEach((c,k)=>{ if(lastPreviewRows[k] && csvPrinted.has(lastPreviewRows[k].__i)) c.classList.add("printed"); });
+  toast(`Пакет: ${j.count} наклеек отправлено`);
 };
 
 // --- template save/load for agent/LLM ---
@@ -374,6 +462,8 @@ $("#cableDia").addEventListener("input",()=>{ $("#cableType").value="0"; });
 $("#lineSpacing").addEventListener("input",()=>{ $("#lsVal").textContent=(+$("#lineSpacing").value).toFixed(2); });
 $("#addLine").onclick=()=>addLine("");
 $("#printBtn").onclick=doPrint;
+$("#cutBtn").onclick=async()=>{ const j=await (await fetch("/api/cut",{method:"POST"})).json(); toast(j.message||"обрез"); };
+$("#stopBtn").onclick=async()=>{ await fetch("/api/stop",{method:"POST"}); toast("Стоп: остановка после текущей наклейки"); };
 $("#refreshBtn").onclick=doRender;
 $("#autoTape").onclick=checkStatus;
 

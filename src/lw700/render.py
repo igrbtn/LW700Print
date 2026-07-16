@@ -301,9 +301,24 @@ def _patch_panel(spec: "LabelSpec", height: int, margin: int) -> Image.Image:
     return img
 
 
-def to_png_bytes(img: Image.Image, scale: int = 3) -> bytes:
-    """Upscaled PNG for on-screen preview (nearest-neighbour keeps dots crisp)."""
-    big = img.resize((img.width * scale, img.height * scale), Image.NEAREST)
+MARGIN_DOTS = 64  # ~9 mm head-to-cutter dead zone (per end)
+
+
+def to_png_bytes(img: Image.Image, scale: int = 3, show_margins: bool = True) -> bytes:
+    """Upscaled PNG for on-screen preview (nearest-neighbour keeps dots crisp).
+
+    When show_margins is set, the ~9 mm unprintable dead zones the printer adds on
+    both ends are drawn as grey bands so the physical label is represented truthfully.
+    """
+    big = img.resize((img.width * scale, img.height * scale), Image.NEAREST).convert("L")
+    if show_margins:
+        m = MARGIN_DOTS * scale
+        canvas = Image.new("L", (big.width + 2 * m, big.height), 255)
+        canvas.paste(big, (m, 0))
+        band = Image.new("L", (m, big.height), 0xCC)  # light grey dead-zone band
+        canvas.paste(band, (0, 0))
+        canvas.paste(band, (big.width + m, 0))
+        big = canvas
     buf = io.BytesIO()
-    big.convert("L").save(buf, format="PNG")
+    big.save(buf, format="PNG")
     return buf.getvalue()
