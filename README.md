@@ -64,6 +64,21 @@ USBBackend().print_label(img, tape_mm=18) # encode + bulk-write over USB
 data = encode(img, cut=CUT_EACH_JOB)
 ```
 
+## Command line
+
+```bash
+./lw700 status                                          # printer + auto-detected tape
+./lw700 print --tape 12 --line "Server-01" --line "192.168.0.1"
+./lw700 print --type cable_flag --line "R4-1 1/1/1 | HOST01" --cable-dia 6
+./lw700 print --type qr --code "https://x" --line "Server-01"
+./lw700 render --out label.png --line "test"            # no printer, save PNG
+./lw700 batch --csv data.csv --type cable_flag --line "{marking}" --cable-dia 6
+./lw700 batch --csv data.csv --template template.json   # {placeholder} substitution
+```
+
+The `batch` command substitutes `{column}` placeholders from the CSV, so an LLM or
+script can fill a CSV and print a whole run. `--out` renders PNGs instead of printing.
+
 ## Tools
 
 Small standalone probes (require the printer connected):

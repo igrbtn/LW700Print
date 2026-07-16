@@ -21,3 +21,4 @@ tools/dump_cap_b64.ps1
 .DS_Store
 tools/run_filter.py
 tools/engage_sweep.py
+tools/journal_to_csv.py

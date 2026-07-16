@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+# CLI wrapper: run `./lw700 <command>` without installing.
+# Prefers the project venv if present.
+DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PY="$DIR/venv/bin/python"
+[ -x "$PY" ] || PY="python3"
+PYTHONPATH="$DIR/src${PYTHONPATH:+:$PYTHONPATH}" exec "$PY" -m lw700 "$@"
