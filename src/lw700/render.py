@@ -50,6 +50,7 @@ class LabelSpec:
     barcode_type: str = "code128"
     show_code_text: bool = True
     invert: bool = False  # white on black
+    line_spacing: float = 0.3   # inter-line gap as fraction of each line's band (0 = tight)
     # professional / cable labelling
     cable_diameter_mm: float = 5.0   # for cable_flag/wrap: wrap length = pi * diameter
     wrap_mm: float = 0.0             # explicit middle wrap length (overrides diameter if > 0)
@@ -83,6 +84,7 @@ class LabelSpec:
             barcode_type=d.get("barcode_type", "code128"),
             show_code_text=bool(d.get("show_code_text", True)),
             invert=bool(d.get("invert", False)),
+            line_spacing=float(d.get("line_spacing", 0.3)),
             cable_diameter_mm=float(d.get("cable_diameter_mm", 5.0)),
             wrap_mm=float(d.get("wrap_mm", 0.0)),
             flag_mirror=bool(d.get("flag_mirror", True)),
@@ -92,12 +94,12 @@ class LabelSpec:
         )
 
 
-def _auto_font(line: Line, band_h: int) -> "fonts.ImageFont.FreeTypeFont":
+def _auto_font(line: Line, band_h: int, pad: float = LINE_PAD_FRAC) -> "fonts.ImageFont.FreeTypeFont":
     if line.size_pt > 0:
         px = mm_to_dots(line.size_pt * 25.4 / 72.0)  # pt -> dots at 180dpi
         return fonts.load_font(line.font, max(6, px), line.bold)
     # auto-fit: binary search a size whose ascent+descent ~= usable band height
-    target = int(band_h * (1 - 2 * LINE_PAD_FRAC))
+    target = int(band_h * (1 - 2 * pad))
     lo, hi, best = 6, 400, 6
     while lo <= hi:
         mid = (lo + hi) // 2
@@ -110,10 +112,11 @@ def _auto_font(line: Line, band_h: int) -> "fonts.ImageFont.FreeTypeFont":
     return fonts.load_font(line.font, best, line.bold)
 
 
-def _text_block(lines: list[Line], height: int, margin: int, fixed_len: int | None) -> Image.Image:
+def _text_block(lines: list[Line], height: int, margin: int, fixed_len: int | None,
+                pad: float = LINE_PAD_FRAC) -> Image.Image:
     n = max(1, len(lines))
     band_h = height // n
-    fitted = [(ln, _auto_font(ln, band_h)) for ln in lines]
+    fitted = [(ln, _auto_font(ln, band_h, pad)) for ln in lines]
 
     # measure widest line to size the block length (auto)
     tmp = Image.new("1", (1, 1), 1)
@@ -188,7 +191,7 @@ def render(spec: LabelSpec) -> Image.Image:
     fixed_len = mm_to_dots(min(spec.length_mm, MAX_LENGTH_MM)) if spec.length_mode == "fixed" else None
 
     if spec.label_type == "text":
-        img = _text_block(spec.lines, height, margin, fixed_len)
+        img = _text_block(spec.lines, height, margin, fixed_len, spec.line_spacing / 2)
 
     elif spec.label_type == "qr":
         qr = _qr_img(spec.code_data or (spec.lines[0].text if spec.lines else " "), height)
@@ -197,7 +200,7 @@ def render(spec: LabelSpec) -> Image.Image:
         img.paste(qr, (margin, 0))
         if spec.show_code_text and spec.lines and spec.lines[0].text:
             # caption to the right of the QR
-            cap = _text_block(spec.lines, height, margin, None)
+            cap = _text_block(spec.lines, height, margin, None, spec.line_spacing / 2)
             need = qr.width + 2 * margin + cap.width
             if need > img.width:
                 new = Image.new("1", (need, height), 1)
@@ -214,7 +217,7 @@ def render(spec: LabelSpec) -> Image.Image:
 
     elif spec.label_type == "text_qr":
         qr = _qr_img(spec.code_data or " ", height)
-        cap = _text_block(spec.lines, height, margin, None)
+        cap = _text_block(spec.lines, height, margin, None, spec.line_spacing / 2)
         length = fixed_len or (qr.width + 3 * margin + cap.width)
         img = Image.new("1", (max(length, qr.width + 3 * margin + cap.width), height), 1)
         img.paste(qr, (margin, 0))
@@ -227,7 +230,7 @@ def render(spec: LabelSpec) -> Image.Image:
     elif spec.label_type == "patch_panel":
         img = _patch_panel(spec, height, margin)
     else:
-        img = _text_block(spec.lines, height, margin, fixed_len)
+        img = _text_block(spec.lines, height, margin, fixed_len, spec.line_spacing / 2)
 
     if spec.invert:
         from PIL import ImageOps
@@ -245,20 +248,25 @@ def _cable_flag(spec: "LabelSpec", height: int, margin: int) -> Image.Image:
     """Cable flag: text near BOTH ends, blank middle wraps the cable; when the two
     ends fold together they form a two-sided flag. The 2nd face is rotated 180 deg
     (flag_mirror) so both faces read upright once folded."""
-    text = _text_block(spec.lines, height, margin, None)
+    text = _text_block(spec.lines, height, margin, None, spec.line_spacing / 2)
     wrap = _wrap_dots(spec)
     total = text.width * 2 + wrap
     img = Image.new("1", (total, height), 1)
     img.paste(text, (0, 0))                                  # left flag (near left end)
     right = text.rotate(180) if spec.flag_mirror else text
     img.paste(right, (total - right.width, 0))               # right flag (near right end)
+    # centering stripe: dashed vertical line at the fold centre (cable axis)
+    draw = ImageDraw.Draw(img)
+    cx = total // 2
+    for y in range(0, height, 6):
+        draw.line([(cx, y), (cx, min(y + 3, height - 1))], fill=0, width=2)
     return img
 
 
 def _cable_wrap(spec: "LabelSpec", height: int, margin: int) -> Image.Image:
     """Self-laminating cable wrap: the text is repeated along the length so at least
     one copy is readable after the label is wound around the cable."""
-    block = _text_block(spec.lines, height, margin, None)
+    block = _text_block(spec.lines, height, margin, None, spec.line_spacing / 2)
     n = max(1, spec.repeat)
     gap = margin
     total = block.width * n + gap * (n - 1)

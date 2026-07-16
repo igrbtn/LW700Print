@@ -104,6 +104,8 @@
       <legend>Строки (1-8)</legend>
       <div id="lines"></div>
       <button class="ghost" id="addLine">+ строка</button>
+      <label class="f" style="margin-top:10px">Межстрочное расстояние: <span id="lsVal">0.30</span></label>
+      <input type="range" id="lineSpacing" min="0" max="0.8" step="0.05" value="0.3" style="width:100%">
     </fieldset>
 
     <fieldset id="codeFs" class="hidden">
@@ -119,8 +121,18 @@
 
     <fieldset id="flagFs" class="hidden">
       <legend>Кабель (флажок / обёртка)</legend>
-      <div class="row">
-        <div><label class="f">Диаметр кабеля, мм</label><input type="number" id="cableDia" value="5" min="1" max="50" step="0.5"></div>
+      <label class="f">Тип кабеля</label>
+      <select id="cableType">
+        <option value="0">Ручной ввод</option>
+        <option value="2.5">Оптика LC/патч (2.5 мм)</option>
+        <option value="3">Оптика в оболочке (3 мм)</option>
+        <option value="6" selected>UTP Cat5e/6 (6 мм)</option>
+        <option value="7">UTP Cat6a / коаксиал (7 мм)</option>
+        <option value="8">Силовой IEC (8 мм)</option>
+        <option value="12">Силовой толстый (12 мм)</option>
+      </select>
+      <div class="row" style="margin-top:8px">
+        <div><label class="f">Диаметр кабеля, мм</label><input type="number" id="cableDia" value="6" min="1" max="50" step="0.5"></div>
         <div><label class="f">Обхват вручную, мм (0=авто)</label><input type="number" id="wrapMm" value="0" min="0" max="200" step="1"></div>
       </div>
       <div class="row" style="margin-top:8px">
@@ -146,6 +158,17 @@
       <div id="csvPreview"></div>
       <button class="ghost hidden" id="batchBtn" style="margin-top:8px">Печать всех строк</button>
       <div class="hint">Подставляй колонки в текст строк как <code>{Имя_колонки}</code>. Текущие строки = шаблон.</div>
+    </fieldset>
+
+    <fieldset>
+      <legend>Шаблон для агента / LLM</legend>
+      <div class="row">
+        <button class="ghost" id="saveJson">Сохранить шаблон (JSON)</button>
+        <button class="ghost" id="saveCsv">CSV для наполнения</button>
+      </div>
+      <label class="f" style="margin-top:8px">Загрузить шаблон (JSON)</label>
+      <input type="file" id="loadJson" accept=".json">
+      <div class="hint">CSV содержит колонки из <code>{плейсхолдеров}</code> в строках/коде + пример. LLM/агент наполняет строки, потом загрузи CSV выше и «Печать всех строк». JSON хранит всю конфигурацию лейбла.</div>
     </fieldset>
   </section>
 
@@ -233,6 +256,7 @@ function buildSpec(){
     length_mode:$("#lenMode").value, length_mm:+$("#lenMm").value, margin_mm:+$("#margin").value,
     code_data:$("#codeData").value, barcode_type:$("#barcodeType").value,
     show_code_text:$("#showCodeText").checked, invert:$("#invert").checked,
+    line_spacing:+$("#lineSpacing").value,
     cable_diameter_mm:+$("#cableDia").value, wrap_mm:+$("#wrapMm").value,
     flag_mirror:$("#flagMirror").checked, repeat:+$("#repeat").value,
     ports:+$("#ports").value, port_pitch_mm:+$("#pitch").value };
@@ -290,8 +314,64 @@ $("#batchBtn").onclick = async ()=>{
   toast(`Пакет: ${j.count} наклеек обработано`);
 };
 
+// --- template save/load for agent/LLM ---
+function download(name, text, mime){
+  const b=new Blob([text],{type:mime}); const u=URL.createObjectURL(b);
+  const a=document.createElement("a"); a.href=u; a.download=name; a.click(); URL.revokeObjectURL(u);
+}
+function placeholders(){
+  const spec=buildSpec(); const set=new Set(); const re=/\{([^}]+)\}/g;
+  const scan=s=>{ let m; while((m=re.exec(s||""))!==null) set.add(m[1]); };
+  spec.lines.forEach(l=>scan(l.text)); scan(spec.code_data);
+  return [...set];
+}
+$("#saveJson").onclick=()=>download("label_template.json", JSON.stringify(buildSpec(),null,2), "application/json");
+$("#saveCsv").onclick=()=>{
+  let cols=placeholders();
+  if(!cols.length){ cols=buildSpec().lines.map((_,i)=>"line"+(i+1)); }
+  const example=cols.map(c=>c.toLowerCase().includes("ip")?"192.168.0.1":(c.toLowerCase().includes("name")?"Server-01":"value")).join(",");
+  const csv=cols.join(",")+"\n"+example+"\n";
+  download("label_data.csv", csv, "text/csv");
+  toast("CSV-шаблон: колонки "+cols.join(", "));
+};
+function applySpec(s){
+  if(!s) return;
+  if(s.label_type){ TYPE=s.label_type; $("#typeChips").querySelectorAll(".chip").forEach(x=>x.classList.toggle("sel",x.dataset.t===TYPE)); applyTypeUI(); }
+  if(s.tape_mm) $("#tape").value=s.tape_mm;
+  if(s.length_mode) $("#lenMode").value=s.length_mode;
+  if(s.length_mm!=null) $("#lenMm").value=s.length_mm;
+  if(s.margin_mm!=null) $("#margin").value=s.margin_mm;
+  if(s.code_data!=null) $("#codeData").value=s.code_data;
+  if(s.barcode_type) $("#barcodeType").value=s.barcode_type;
+  if(s.cable_diameter_mm!=null) $("#cableDia").value=s.cable_diameter_mm;
+  if(s.wrap_mm!=null) $("#wrapMm").value=s.wrap_mm;
+  if(s.repeat!=null) $("#repeat").value=s.repeat;
+  if(s.ports!=null) $("#ports").value=s.ports;
+  if(s.port_pitch_mm!=null) $("#pitch").value=s.port_pitch_mm;
+  if(Array.isArray(s.lines)&&s.lines.length){
+    $("#lines").innerHTML=""; s.lines.forEach(ln=>addLine(ln.text||""));
+    [...$("#lines").querySelectorAll(".line")].forEach((d,i)=>{
+      const ln=s.lines[i]; if(!ln) return;
+      if(ln.font) d.querySelector(".ft").value=ln.font;
+      d.querySelector(".sz").value=ln.size_pt||0;
+      d.querySelector(".al").value=ln.align||"center";
+      d.querySelector(".bd").checked=!!ln.bold;
+    });
+  }
+  scheduleRender();
+}
+$("#loadJson").onchange=async e=>{
+  const f=e.target.files[0]; if(!f) return;
+  try{ applySpec(JSON.parse(await f.text())); toast("Шаблон загружен"); }
+  catch(err){ toast("Ошибка JSON: "+err); }
+};
+// cable type preset -> diameter (0 = manual, keep field editable)
+$("#cableType").onchange=()=>{ const v=+$("#cableType").value; if(v>0){ $("#cableDia").value=v; scheduleRender(); } };
+$("#cableDia").addEventListener("input",()=>{ $("#cableType").value="0"; });
+
 // wire global controls
-["#tape","#lenMode","#lenMm","#margin","#invert","#codeData","#barcodeType","#showCodeText","#cableDia","#wrapMm","#flagMirror","#repeat","#ports","#pitch"].forEach(s=>{ const el=$(s); el.oninput=scheduleRender; el.onchange=scheduleRender; });
+["#tape","#lenMode","#lenMm","#margin","#invert","#codeData","#barcodeType","#showCodeText","#cableDia","#wrapMm","#flagMirror","#repeat","#ports","#pitch","#lineSpacing"].forEach(s=>{ const el=$(s); el.oninput=scheduleRender; el.onchange=scheduleRender; });
+$("#lineSpacing").addEventListener("input",()=>{ $("#lsVal").textContent=(+$("#lineSpacing").value).toFixed(2); });
 $("#addLine").onclick=()=>addLine("");
 $("#printBtn").onclick=doPrint;
 $("#refreshBtn").onclick=doRender;
