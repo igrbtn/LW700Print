@@ -150,21 +150,10 @@ async def api_render_specs(request: Request):
 @app.post("/api/print_specs")
 async def api_print_specs(request: Request):
     data = await request.json()
-    specs = data.get("specs", [])
+    specs = data.get("specs", [])[:1000]
     prefer_usb = bool(data.get("use_usb", True))
-    _stop["flag"] = False
-    results = []
-    for i, sd in enumerate(specs[:1000]):
-        if _stop["flag"]:
-            results.append(f"STOPPED after {i}")
-            break
-        spec = render.LabelSpec.from_dict(sd)
-        img = render.render(spec)
-        backend = backends.get_backend(prefer_usb, OUTPUT)
-        try:
-            results.append(backend.print_label(img, tape_mm=spec.tape_mm))
-        except backends.NotReady:
-            results.append(backends.PreviewBackend(OUTPUT).print_label(img, tape_mm=spec.tape_mm))
+    jobs = [_render_job(sd) for sd in specs]
+    results = _run_batch(jobs, prefer_usb)
     return {"ok": True, "count": len(results), "results": results, "stopped": _stop["flag"]}
 
 
@@ -172,22 +161,34 @@ async def api_print_specs(request: Request):
 async def api_print_batch(request: Request):
     data = await request.json()
     template = data.get("template", {})
-    rows = data.get("rows", [])
+    rows = data.get("rows", [])[:1000]
     prefer_usb = bool(data.get("use_usb", True))
-    _stop["flag"] = False
-    results = []
-    for i, row in enumerate(rows[:1000]):
-        if _stop["flag"]:
-            results.append(f"STOPPED after {i}")
-            break
-        spec = render.LabelSpec.from_dict(_apply_template(template, row))
-        img = render.render(spec)
-        backend = backends.get_backend(prefer_usb, OUTPUT)
-        try:
-            results.append(backend.print_label(img, tape_mm=spec.tape_mm))
-        except backends.NotReady:
-            results.append(backends.PreviewBackend(OUTPUT).print_label(img, tape_mm=spec.tape_mm))
+    jobs = [_render_job(_apply_template(template, row)) for row in rows]
+    results = _run_batch(jobs, prefer_usb)
     return {"ok": True, "count": len(results), "results": results, "stopped": _stop["flag"]}
+
+
+def _render_job(spec_dict: dict):
+    spec = render.LabelSpec.from_dict(spec_dict)
+    return render.render(spec), spec.tape_mm
+
+
+def _run_batch(jobs, prefer_usb: bool):
+    """Print a whole batch over one USB connection; fall back to preview if not ready."""
+    _stop["flag"] = False
+    if prefer_usb and backends.detect_status().connected:
+        try:
+            return backends.print_labels_usb(jobs, should_stop=lambda: _stop["flag"])
+        except backends.NotReady:
+            pass
+    pv = backends.PreviewBackend(OUTPUT)
+    out = []
+    for i, (img, tape) in enumerate(jobs):
+        if _stop["flag"]:
+            out.append(f"STOPPED after {i}")
+            break
+        out.append(pv.print_label(img, tape_mm=tape))
+    return out
 
 
 def _apply_template(template: dict, row: dict) -> dict:

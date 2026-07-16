@@ -44,13 +44,13 @@ class LabelSpec:
     lines: list[Line] = field(default_factory=lambda: [Line(text="LW-700")])
     length_mode: Literal["auto", "fixed"] = "auto"
     length_mm: float = 40.0
-    margin_mm: float = 3.0
+    margin_mm: float = 0.0
     # barcode / qr
     code_data: str = ""
     barcode_type: str = "code128"
     show_code_text: bool = True
     invert: bool = False  # white on black
-    line_spacing: float = 0.3   # inter-line gap as fraction of each line's band (0 = tight)
+    line_spacing: float = 0.0   # inter-line gap as fraction of each line's band (0 = tight)
     # professional / cable labelling
     cable_diameter_mm: float = 5.0   # for cable_flag/wrap: wrap length = pi * diameter
     wrap_mm: float = 0.0             # explicit middle wrap length (overrides diameter if > 0)
@@ -79,12 +79,12 @@ class LabelSpec:
             lines=lines,
             length_mode=d.get("length_mode", "auto"),
             length_mm=float(d.get("length_mm", 40.0)),
-            margin_mm=float(d.get("margin_mm", 3.0)),
+            margin_mm=float(d.get("margin_mm", 0.0)),
             code_data=str(d.get("code_data", "")),
             barcode_type=d.get("barcode_type", "code128"),
             show_code_text=bool(d.get("show_code_text", True)),
             invert=bool(d.get("invert", False)),
-            line_spacing=float(d.get("line_spacing", 0.3)),
+            line_spacing=float(d.get("line_spacing", 0.0)),
             cable_diameter_mm=float(d.get("cable_diameter_mm", 5.0)),
             wrap_mm=float(d.get("wrap_mm", 0.0)),
             flag_mirror=bool(d.get("flag_mirror", True)),

@@ -198,6 +198,84 @@ def cut_tape() -> str:
     return "cut sent"
 
 
+# LW-700 prints/feeds at roughly this speed; used to wait out one label before the
+# next INIT is sent in a batch (a mid-print INIT resets the head -> feed jump + tail clip).
+# Deliberately conservative (under-estimating speed = waiting a little longer) because
+# a mid-print INIT corrupts the label, while a few extra idle seconds are harmless
+# (auto-power-off is minutes away). Calibrate with tools/probe_busy.py.
+PRINT_SPEED_MM_S = 8.0
+CUT_SECONDS = 2.0
+LEAD_TRAIL_DOTS = 128  # lead+trail blank feed added by the encoder (~18 mm)
+
+
+def feed_seconds(length_dots: int) -> float:
+    """Estimated seconds to print+feed+cut one label of the given along-tape length."""
+    mm = (length_dots + LEAD_TRAIL_DOTS) / 180 * 25.4
+    return mm / PRINT_SPEED_MM_S + CUT_SECONDS
+
+
+def print_labels_usb(jobs, *, should_stop=None, on_result=None, wait: bool = True):
+    """Print several labels over ONE USB connection (claim the interface once).
+
+    Per-label claim/release/dispose churn leaves the bulk pipe in a dirty state on
+    macOS - the first label prints clean, later (long) labels drop columns. Holding a
+    single persistent pipe for the whole batch and waiting for each label to finish
+    before the next INIT fixes the corruption seen on cable-flag batches.
+
+    jobs: list of (PIL.Image, tape_mm). Returns a list of per-label result strings.
+    Raises NotReady if the printer can't be opened (caller falls back to preview).
+    """
+    import time
+
+    import usb.core
+    import usb.util
+
+    from .escpl2 import CUT_EACH_JOB, encode
+
+    dev = None
+    for _ in range(10):
+        dev = usb.core.find(idVendor=VID, idProduct=PID)
+        if dev is not None:
+            break
+        time.sleep(0.5)
+    if dev is None:
+        raise NotReady("LW-700 not found on USB (powered off / disconnected?)")
+    try:
+        dev.set_configuration()
+    except usb.core.USBError:
+        pass
+    cfg = dev.get_active_configuration()
+    intf = next((i for i in cfg if i.bInterfaceClass == 7), cfg[(0, 0)])
+    ep = next(e for e in intf
+              if usb.util.endpoint_direction(e.bEndpointAddress) == usb.util.ENDPOINT_OUT)
+    try:
+        usb.util.claim_interface(dev, intf.bInterfaceNumber)
+    except usb.core.USBError:
+        pass
+
+    results = []
+    n = len(jobs)
+    try:
+        for i, (img, tape_mm) in enumerate(jobs):
+            if should_stop and should_stop():
+                results.append(f"STOPPED after {i}")
+                break
+            data = encode(img, cut=CUT_EACH_JOB)
+            written = 0
+            for k in range(0, len(data), 4096):
+                written += ep.write(data[k:k + 4096], timeout=15000)
+            msg = f"printed {tape_mm}mm label ({written} bytes ESCPL2)"
+            results.append(msg)
+            if on_result:
+                on_result(i, msg)
+            if wait and i < n - 1:
+                time.sleep(feed_seconds(img.width))  # let this label finish before next INIT
+    finally:
+        usb.util.release_interface(dev, intf.bInterfaceNumber)
+        usb.util.dispose_resources(dev)
+    return results
+
+
 def get_backend(prefer_usb: bool, out_dir: str) -> PrinterBackend:
     if prefer_usb and detect_status().connected:
         return USBBackend()
