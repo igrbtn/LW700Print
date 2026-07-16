@@ -355,7 +355,9 @@ function buildGroupedSpecs(rows){
     const lines=rs.map(r=>({text:r.text??"", bold:truthy(r.bold), align:r.align||"center",
       font:r.font||"DejaVu Sans", size_pt:num(r.size_pt,0)}));
     const f=rs[0];
-    specs.push({...base, label_type:"text", lines,
+    // keep the selected label type (cable_flag / text / text_qr / ...); grouped rows
+    // just supply the multiline text + per-line formatting
+    specs.push({...base, lines,
       tape_mm:num(f.tape_mm, base.tape_mm), line_spacing:num(f.line_spacing, base.line_spacing)});
   }
   return specs;
