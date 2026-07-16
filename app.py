@@ -46,7 +46,8 @@ def meta():
         "tapes": [{"mm": t.width_mm, "dots": t.printable_dots} for t in TAPES.values()],
         "min_lines": MIN_LINES,
         "max_lines": MAX_LINES,
-        "label_types": ["text", "qr", "barcode", "text_qr"],
+        "label_types": ["text", "qr", "barcode", "text_qr",
+                        "cable_flag", "cable_wrap", "patch_panel"],
         "barcode_types": ["code128", "code39", "ean13", "ean8", "upca", "isbn13"],
         "aligns": ["left", "center", "right"],
     }

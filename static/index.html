@@ -117,6 +117,28 @@
       <div class="hint">Для QR подпись берётся из первой строки (тип «текст+QR» или «QR»).</div>
     </fieldset>
 
+    <fieldset id="flagFs" class="hidden">
+      <legend>Кабель (флажок / обёртка)</legend>
+      <div class="row">
+        <div><label class="f">Диаметр кабеля, мм</label><input type="number" id="cableDia" value="5" min="1" max="50" step="0.5"></div>
+        <div><label class="f">Обхват вручную, мм (0=авто)</label><input type="number" id="wrapMm" value="0" min="0" max="200" step="1"></div>
+      </div>
+      <div class="row" style="margin-top:8px">
+        <div><label class="f">&nbsp;</label><label class="toggle"><input type="checkbox" id="flagMirror" checked> Зеркалить 2-й конец (флажок)</label></div>
+        <div><label class="f">Повторов (обёртка)</label><input type="number" id="repeat" value="4" min="1" max="20" step="1"></div>
+      </div>
+      <div class="hint">Флажок: текст у обоих концов, середина (обхват = π·диаметр) обнимает кабель. Обёртка: текст повторяется вдоль.</div>
+    </fieldset>
+
+    <fieldset id="panelFs" class="hidden">
+      <legend>Патч-панель</legend>
+      <div class="row">
+        <div><label class="f">Портов</label><input type="number" id="ports" value="12" min="1" max="48" step="1"></div>
+        <div><label class="f">Шаг, мм (0=по длине)</label><input type="number" id="pitch" value="0" min="0" max="50" step="0.5"></div>
+      </div>
+      <div class="hint">Ячейка на порт. Строки = подписи портов (по одной на порт), иначе авто-нумерация 1..N.</div>
+    </fieldset>
+
     <fieldset>
       <legend>Импорт из CSV (пакетная печать)</legend>
       <input type="file" id="csvFile" accept=".csv">
@@ -151,7 +173,8 @@ async function loadMeta(){
   const tape = $("#tape"); tape.innerHTML = META.tapes.map(t=>`<option value="${t.mm}">${t.mm} мм (${t.dots} точек)</option>`).join("");
   tape.value = 18;
   $("#barcodeType").innerHTML = META.barcode_types.map(b=>`<option>${b}</option>`).join("");
-  const labels = {text:"Текст", qr:"QR", barcode:"Штрихкод", text_qr:"Текст + QR"};
+  const labels = {text:"Текст", qr:"QR", barcode:"Штрихкод", text_qr:"Текст + QR",
+    cable_flag:"Флажок кабеля", cable_wrap:"Обёртка кабеля", patch_panel:"Патч-панель"};
   $("#typeChips").innerHTML = META.label_types.map(t=>`<span class="chip ${t===TYPE?'sel':''}" data-t="${t}">${labels[t]||t}</span>`).join("");
   $("#typeChips").querySelectorAll(".chip").forEach(c=>c.onclick=()=>{ TYPE=c.dataset.t; $("#typeChips").querySelectorAll(".chip").forEach(x=>x.classList.toggle("sel", x===c)); applyTypeUI(); scheduleRender(); });
   addLine("LW-700");
@@ -159,10 +182,12 @@ async function loadMeta(){
 }
 
 function applyTypeUI(){
-  const showText = (TYPE==="text"||TYPE==="qr"||TYPE==="text_qr");
-  const showCode = (TYPE==="qr"||TYPE==="barcode"||TYPE==="text_qr");
+  const showText = ["text","qr","text_qr","cable_flag","cable_wrap","patch_panel"].includes(TYPE);
+  const showCode = ["qr","barcode","text_qr"].includes(TYPE);
   $("#textFs").classList.toggle("hidden", !showText);
   $("#codeFs").classList.toggle("hidden", !showCode);
+  $("#flagFs").classList.toggle("hidden", !["cable_flag","cable_wrap"].includes(TYPE));
+  $("#panelFs").classList.toggle("hidden", TYPE!=="patch_panel");
 }
 
 function fontOptions(sel){ return META.fonts.map(f=>`<option ${f===sel?'selected':''}>${f}</option>`).join(""); }
@@ -207,7 +232,10 @@ function buildSpec(){
     tape_mm:+$("#tape").value, label_type:TYPE, lines:collectLines(),
     length_mode:$("#lenMode").value, length_mm:+$("#lenMm").value, margin_mm:+$("#margin").value,
     code_data:$("#codeData").value, barcode_type:$("#barcodeType").value,
-    show_code_text:$("#showCodeText").checked, invert:$("#invert").checked };
+    show_code_text:$("#showCodeText").checked, invert:$("#invert").checked,
+    cable_diameter_mm:+$("#cableDia").value, wrap_mm:+$("#wrapMm").value,
+    flag_mirror:$("#flagMirror").checked, repeat:+$("#repeat").value,
+    ports:+$("#ports").value, port_pitch_mm:+$("#pitch").value };
 }
 
 let renderTimer=null;
@@ -263,7 +291,7 @@ $("#batchBtn").onclick = async ()=>{
 };
 
 // wire global controls
-["#tape","#lenMode","#lenMm","#margin","#invert","#codeData","#barcodeType","#showCodeText"].forEach(s=>{ const el=$(s); el.oninput=scheduleRender; el.onchange=scheduleRender; });
+["#tape","#lenMode","#lenMm","#margin","#invert","#codeData","#barcodeType","#showCodeText","#cableDia","#wrapMm","#flagMirror","#repeat","#ports","#pitch"].forEach(s=>{ const el=$(s); el.oninput=scheduleRender; el.onchange=scheduleRender; });
 $("#addLine").onclick=()=>addLine("");
 $("#printBtn").onclick=doPrint;
 $("#refreshBtn").onclick=doRender;

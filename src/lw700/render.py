@@ -18,8 +18,11 @@ from PIL import Image, ImageDraw
 from . import fonts
 from .spec import DEFAULT_TAPE_MM, MAX_LINES, mm_to_dots, tape
 
+import math
+
 Align = Literal["left", "center", "right"]
-LabelType = Literal["text", "qr", "barcode", "text_qr"]
+LabelType = Literal["text", "qr", "barcode", "text_qr",
+                    "cable_flag", "cable_wrap", "patch_panel"]
 
 MAX_LENGTH_MM = 500  # safety cap
 LINE_PAD_FRAC = 0.15  # vertical padding inside each text band
@@ -47,6 +50,13 @@ class LabelSpec:
     barcode_type: str = "code128"
     show_code_text: bool = True
     invert: bool = False  # white on black
+    # professional / cable labelling
+    cable_diameter_mm: float = 5.0   # for cable_flag/wrap: wrap length = pi * diameter
+    wrap_mm: float = 0.0             # explicit middle wrap length (overrides diameter if > 0)
+    flag_mirror: bool = True         # cable_flag: rotate the 2nd face 180 so both read upright
+    repeat: int = 4                 # cable_wrap: number of text repeats along the length
+    ports: int = 12                 # patch_panel: number of ports
+    port_pitch_mm: float = 0.0      # patch_panel: centre-to-centre pitch (0 => auto by length)
 
     @staticmethod
     def from_dict(d: dict) -> "LabelSpec":
@@ -73,6 +83,12 @@ class LabelSpec:
             barcode_type=d.get("barcode_type", "code128"),
             show_code_text=bool(d.get("show_code_text", True)),
             invert=bool(d.get("invert", False)),
+            cable_diameter_mm=float(d.get("cable_diameter_mm", 5.0)),
+            wrap_mm=float(d.get("wrap_mm", 0.0)),
+            flag_mirror=bool(d.get("flag_mirror", True)),
+            repeat=int(d.get("repeat", 4)),
+            ports=int(d.get("ports", 12)),
+            port_pitch_mm=float(d.get("port_pitch_mm", 0.0)),
         )
 
 
@@ -203,12 +219,77 @@ def render(spec: LabelSpec) -> Image.Image:
         img = Image.new("1", (max(length, qr.width + 3 * margin + cap.width), height), 1)
         img.paste(qr, (margin, 0))
         img.paste(cap, (qr.width + 2 * margin, 0))
+
+    elif spec.label_type == "cable_flag":
+        img = _cable_flag(spec, height, margin)
+    elif spec.label_type == "cable_wrap":
+        img = _cable_wrap(spec, height, margin)
+    elif spec.label_type == "patch_panel":
+        img = _patch_panel(spec, height, margin)
     else:
         img = _text_block(spec.lines, height, margin, fixed_len)
 
     if spec.invert:
         from PIL import ImageOps
         img = ImageOps.invert(img.convert("L")).convert("1")
+    return img
+
+
+def _wrap_dots(spec: "LabelSpec") -> int:
+    """Middle wrap length in dots = explicit wrap_mm, else cable circumference."""
+    mm = spec.wrap_mm if spec.wrap_mm > 0 else math.pi * spec.cable_diameter_mm
+    return mm_to_dots(mm)
+
+
+def _cable_flag(spec: "LabelSpec", height: int, margin: int) -> Image.Image:
+    """Cable flag: text near BOTH ends, blank middle wraps the cable; when the two
+    ends fold together they form a two-sided flag. The 2nd face is rotated 180 deg
+    (flag_mirror) so both faces read upright once folded."""
+    text = _text_block(spec.lines, height, margin, None)
+    wrap = _wrap_dots(spec)
+    total = text.width * 2 + wrap
+    img = Image.new("1", (total, height), 1)
+    img.paste(text, (0, 0))                                  # left flag (near left end)
+    right = text.rotate(180) if spec.flag_mirror else text
+    img.paste(right, (total - right.width, 0))               # right flag (near right end)
+    return img
+
+
+def _cable_wrap(spec: "LabelSpec", height: int, margin: int) -> Image.Image:
+    """Self-laminating cable wrap: the text is repeated along the length so at least
+    one copy is readable after the label is wound around the cable."""
+    block = _text_block(spec.lines, height, margin, None)
+    n = max(1, spec.repeat)
+    gap = margin
+    total = block.width * n + gap * (n - 1)
+    img = Image.new("1", (total, height), 1)
+    for i in range(n):
+        img.paste(block, (i * (block.width + gap), 0))
+    return img
+
+
+def _patch_panel(spec: "LabelSpec", height: int, margin: int) -> Image.Image:
+    """Patch-panel strip: one cell per port at a fixed pitch, each cell labelled from
+    the corresponding line (or auto-numbered 1..ports if a single line is given)."""
+    ports = max(1, spec.ports)
+    if spec.port_pitch_mm > 0:
+        pitch = mm_to_dots(spec.port_pitch_mm)
+    elif spec.length_mode == "fixed":
+        pitch = max(1, mm_to_dots(spec.length_mm) // ports)
+    else:
+        pitch = mm_to_dots(12.0)  # sensible default cell width
+    # per-port text: explicit lines, else auto-number
+    texts = [ln.text for ln in spec.lines if ln.text]
+    base = spec.lines[0] if spec.lines else Line()
+    img = Image.new("1", (pitch * ports, height), 1)
+    draw = ImageDraw.Draw(img)
+    for i in range(ports):
+        label = texts[i] if i < len(texts) else str(i + 1)
+        cell = _text_block([Line(text=label, font=base.font, bold=base.bold,
+                                 align="center")], height, margin, pitch)
+        img.paste(cell, (i * pitch, 0))
+        if i:  # divider line between ports
+            draw.line([(i * pitch, 0), (i * pitch, height - 1)], fill=0)
     return img
 
 

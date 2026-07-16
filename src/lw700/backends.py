@@ -31,6 +31,12 @@ class PrinterStatus:
     detail: str
 
 
+# GetLWStatus (0xC1,0x01) byte[3] encodes the loaded tape width.
+# Confirmed on hardware: 0x03 -> 12mm, 0x04 -> 18mm. Others assumed sequential;
+# refine as more tapes are tested.
+TAPE_CODE_MM = {0x01: 6, 0x02: 9, 0x03: 12, 0x04: 18, 0x05: 24}
+
+
 def detect_status() -> PrinterStatus:
     try:
         import usb.core
@@ -42,8 +48,18 @@ def detect_status() -> PrinterStatus:
         return PrinterStatus(False, None, f"usb error: {e}")
     if dev is None:
         return PrinterStatus(False, None, "LW-700 not found on USB")
-    # Present, but tape width needs the (not-yet-decoded) status handshake.
-    return PrinterStatus(True, None, "LW-700 connected (tape auto-detect pending protocol)")
+    tape_mm = None
+    detail = "LW-700 connected"
+    try:
+        st = bytes(dev.ctrl_transfer(0xC1, 0x01, 0, 0, 64, timeout=1500))
+        if len(st) > 3:
+            code = st[3]
+            tape_mm = TAPE_CODE_MM.get(code)
+            detail = (f"LW-700 connected, tape {tape_mm}mm" if tape_mm
+                      else f"LW-700 connected, tape code 0x{code:02x} (unknown width)")
+    except Exception:  # noqa: BLE001 - status read is best-effort
+        pass
+    return PrinterStatus(True, tape_mm, detail)
 
 
 class PrinterBackend:
