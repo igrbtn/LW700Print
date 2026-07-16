@@ -132,6 +132,42 @@ async def api_render_batch(request: Request):
     return {"count": len(items), "items": items}
 
 
+@app.post("/api/render_specs")
+async def api_render_specs(request: Request):
+    """Render a list of fully-built label specs (used by grouped multiline)."""
+    import base64
+    specs = (await request.json()).get("specs", [])
+    items = []
+    for i, sd in enumerate(specs[:1000]):
+        spec = render.LabelSpec.from_dict(sd)
+        img = render.render(spec)
+        png = render.to_png_bytes(img, scale=2)
+        items.append({"index": i, "png": "data:image/png;base64," + base64.b64encode(png).decode(),
+                      "mm": round(img.width / 180 * 25.4, 1), "tape_mm": spec.tape_mm})
+    return {"count": len(items), "items": items}
+
+
+@app.post("/api/print_specs")
+async def api_print_specs(request: Request):
+    data = await request.json()
+    specs = data.get("specs", [])
+    prefer_usb = bool(data.get("use_usb", True))
+    _stop["flag"] = False
+    results = []
+    for i, sd in enumerate(specs[:1000]):
+        if _stop["flag"]:
+            results.append(f"STOPPED after {i}")
+            break
+        spec = render.LabelSpec.from_dict(sd)
+        img = render.render(spec)
+        backend = backends.get_backend(prefer_usb, OUTPUT)
+        try:
+            results.append(backend.print_label(img, tape_mm=spec.tape_mm))
+        except backends.NotReady:
+            results.append(backends.PreviewBackend(OUTPUT).print_label(img, tape_mm=spec.tape_mm))
+    return {"ok": True, "count": len(results), "results": results, "stopped": _stop["flag"]}
+
+
 @app.post("/api/print_batch")
 async def api_print_batch(request: Request):
     data = await request.json()

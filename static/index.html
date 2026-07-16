@@ -21,7 +21,7 @@
   .editor { overflow-y:auto; padding:14px 16px; border-right:1px solid var(--line); }
   .stage { display:flex; flex-direction:column; }
   .stageTop { padding:14px 16px; border-bottom:1px solid var(--line); display:flex; align-items:center; gap:12px; }
-  .preview { flex:1; display:flex; align-items:center; justify-content:center; overflow:auto; padding:24px; background:
+  .preview { flex:2; display:flex; align-items:center; justify-content:center; overflow:auto; padding:24px; background:
     repeating-conic-gradient(#14161c 0% 25%, #10121722 0% 50%) 50% / 22px 22px; }
   .preview img { image-rendering:pixelated; background:#fff; box-shadow:0 8px 40px #0008; max-width:96%; }
   fieldset { border:1px solid var(--line); border-radius:10px; margin:0 0 14px; padding:12px; background:var(--panel); }
@@ -57,7 +57,8 @@
   table.csv { width:100%; border-collapse:collapse; font-size:12px; margin-top:8px; }
   table.csv th,table.csv td { border:1px solid var(--line); padding:4px 6px; text-align:left; white-space:nowrap; }
   .hidden { display:none; }
-  #batchGallery { flex:1; overflow:auto; padding:16px; display:flex; flex-direction:column; gap:10px; align-content:start; }
+  #batchGallery { flex:1; min-height:0; overflow:auto; padding:14px 16px; display:flex; flex-direction:column; gap:10px; align-content:start; border-top:2px solid var(--line); background:var(--bg); }
+  #batchGallery:not(.hidden)::before { content:"Предпросмотр партии"; position:sticky; top:-14px; color:var(--mut); font-size:12px; text-transform:uppercase; letter-spacing:.5px; padding:2px 0; background:var(--bg); }
   .gcard { background:var(--panel); border:1px solid var(--line); border-radius:8px; padding:8px 10px; }
   .gcard .gm { color:var(--mut); font-size:12px; margin-bottom:6px; display:flex; gap:10px; align-items:center; }
   .gcard .gimg { overflow-x:auto; background:#fff; border-radius:4px; padding:4px; }
@@ -174,6 +175,7 @@
       <legend>Импорт из CSV (пакетная печать)</legend>
       <input type="file" id="csvFile" accept=".csv">
       <div id="csvInfo" class="csvbox"></div>
+      <label class="toggle hidden" id="groupWrap" style="margin-top:8px"><input type="checkbox" id="groupMode"> Мультилайн: собрать строки по колонке <b>group</b> (формат с line/bold/align/font/size_pt)</label>
       <input type="text" id="csvSearch" class="hidden" placeholder="Поиск / фильтр по всем колонкам..." style="margin-top:8px">
       <div id="csvTableWrap" style="max-height:280px; overflow:auto; margin-top:8px"></div>
       <div id="selInfo" class="csvbox" style="margin-top:6px"></div>
@@ -330,10 +332,28 @@ $("#csvFile").onchange = async e=>{
   CSV = j; csvSel = new Set(); csvSort={col:null,dir:1};
   $("#csvInfo").textContent = `${j.count} строк · колонки: ${j.columns.join(", ")}`;
   $("#csvSearch").classList.remove("hidden"); $("#csvSearch").value="";
+  $("#groupWrap").classList.toggle("hidden", !CSV.columns.includes("group"));
   $("#previewAllBtn").classList.remove("hidden");
   $("#batchBtn").classList.add("hidden");
   renderCsvTable();
 };
+function num(v,d){ const n=parseFloat(v); return isNaN(n)?d:n; }
+function truthy(v){ return v===1||v==="1"||v==="true"||v===true||String(v).toLowerCase()==="да"; }
+// build one label spec per {group}, lines ordered by 'line', per-line formatting from columns
+function buildGroupedSpecs(rows){
+  const base=buildSpec(); const groups=new Map();
+  rows.forEach(r=>{ const g=r.group??""; if(!groups.has(g)) groups.set(g,[]); groups.get(g).push(r); });
+  const specs=[];
+  for(const [g,rs] of groups){
+    rs.sort((a,b)=>num(a.line,0)-num(b.line,0));
+    const lines=rs.map(r=>({text:r.text??"", bold:truthy(r.bold), align:r.align||"center",
+      font:r.font||"DejaVu Sans", size_pt:num(r.size_pt,0)}));
+    const f=rs[0];
+    specs.push({...base, label_type:"text", lines,
+      tape_mm:num(f.tape_mm, base.tape_mm), line_spacing:num(f.line_spacing, base.line_spacing)});
+  }
+  return specs;
+}
 function csvFiltered(){
   if(!CSV) return [];
   const q=$("#csvSearch").value.trim().toLowerCase();
@@ -372,16 +392,23 @@ function renderCsvTable(){
 }
 $("#csvSearch").oninput = ()=>renderCsvTable();
 function showGallery(on){
-  $("#batchGallery").classList.toggle("hidden", !on);
-  $("#preview").classList.toggle("hidden", on);
+  $("#batchGallery").classList.toggle("hidden", !on);  // bottom third under the main preview
 }
 let csvPrinted = new Set();     // original indices already printed
 let lastPreviewRows = [];       // rows shown in the gallery (for marking printed)
+const grouped = ()=> $("#groupMode").checked && CSV && CSV.columns.includes("group");
 $("#previewAllBtn").onclick = async ()=>{
   const rows=selectedRows(); if(!rows.length){ toast("Нет строк"); return; }
   lastPreviewRows = rows;
-  toast("Рендерю "+rows.length+" наклеек...");
-  const r = await fetch("/api/render_batch",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({template:buildSpec(), rows})});
+  let r;
+  if(grouped()){
+    const specs=buildGroupedSpecs(rows);
+    toast("Рендерю "+specs.length+" наклеек (группировка)...");
+    r = await fetch("/api/render_specs",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({specs})});
+  } else {
+    toast("Рендерю "+rows.length+" наклеек...");
+    r = await fetch("/api/render_batch",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({template:buildSpec(), rows})});
+  }
   const j = await r.json();
   $("#batchGallery").innerHTML = j.items.map((it,k)=>{
     const gi = rows[k] ? rows[k].__i : it.index;
@@ -393,9 +420,16 @@ $("#previewAllBtn").onclick = async ()=>{
 };
 $("#batchBtn").onclick = async ()=>{
   const rows=selectedRows(); if(!rows.length) return;
-  if(!confirm(`Отправить на печать ${rows.length} наклеек?`)) return;
-  const r = await fetch("/api/print_batch",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({template:buildSpec(), rows})});
-  const j = await r.json();
+  let r, j;
+  if(grouped()){
+    const specs=buildGroupedSpecs(rows);
+    if(!confirm(`Отправить на печать ${specs.length} наклеек (группировка)?`)) return;
+    r = await fetch("/api/print_specs",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({specs})});
+  } else {
+    if(!confirm(`Отправить на печать ${rows.length} наклеек?`)) return;
+    r = await fetch("/api/print_batch",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({template:buildSpec(), rows})});
+  }
+  j = await r.json();
   rows.forEach(r=>csvPrinted.add(r.__i));   // mark printed
   renderCsvTable();
   $("#batchGallery").querySelectorAll(".gcard").forEach((c,k)=>{ if(lastPreviewRows[k] && csvPrinted.has(lastPreviewRows[k].__i)) c.classList.add("printed"); });
