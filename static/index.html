@@ -102,8 +102,7 @@
 <div id="typeRibbon">
   <div class="ribGroup">
     <span class="rlabel">Лента</span>
-    <select id="tape" class="rib" title="Ширина ленты"></select>
-    <button class="ghost rib" id="autoTape" title="Определить по принтеру">Авто</button>
+    <select id="tape" class="rib" title="Ширина ленты (Авто - определить по принтеру)"></select>
     <select id="lenMode" class="rib" title="Режим длины">
       <option value="auto">Авто длина</option>
       <option value="fixed">Фикс. мм</option>
@@ -186,14 +185,9 @@
     </fieldset>
 
     <fieldset>
-      <legend>Шаблон для агента / LLM</legend>
-      <div class="row">
-        <button class="ghost" id="saveJson">Сохранить шаблон (JSON)</button>
-        <button class="ghost" id="saveCsv">CSV для наполнения</button>
-      </div>
-      <label class="f" style="margin-top:8px">Загрузить шаблон (JSON)</label>
-      <input type="file" id="loadJson" accept=".json">
-      <div class="hint">CSV содержит колонки из <code>{плейсхолдеров}</code> в строках/коде + пример. LLM/агент наполняет строки, потом загрузи CSV выше и «Печать всех строк». JSON хранит всю конфигурацию лейбла.</div>
+      <legend>CSV-шаблон для наполнения</legend>
+      <button class="ghost" id="saveCsv">Сохранить наклейку как CSV-шаблон</button>
+      <div class="hint">Собери наклейку слева и сохрани её как CSV-шаблон: по строке на каждую строку наклейки (<code>group/line/text/bold/align/font/size_pt</code>). Пользователь или LLM дублирует группы и наполняет текст, затем «Импорт из CSV» выше и «Печать партии».</div>
     </fieldset>
   </section>
 
@@ -220,14 +214,19 @@
 
 <script>
 const $ = s => document.querySelector(s);
-let META = null, TYPE = "text";
+let META = null, TYPE = "text", detectedTape = null;
+// tape width: "auto" resolves to the printer-detected width (fallback 18mm)
+function tapeMm(){ const v=$("#tape").value; return v==="auto" ? (detectedTape||18) : +v; }
+// length: hide the mm input in auto mode, show it only for fixed length
+function applyLenMode(){ $("#lenMm").classList.toggle("hidden", $("#lenMode").value!=="fixed"); }
 
 function toast(msg, ms=2600){ const t=$("#toast"); t.textContent=msg; t.classList.add("show"); clearTimeout(t._t); t._t=setTimeout(()=>t.classList.remove("show"), ms); }
 
 async function loadMeta(){
   META = await (await fetch("/api/meta")).json();
-  const tape = $("#tape"); tape.innerHTML = META.tapes.map(t=>`<option value="${t.mm}">${t.mm} мм (${t.dots} точек)</option>`).join("");
-  tape.value = 18;
+  const tape = $("#tape");
+  tape.innerHTML = `<option value="auto">Авто</option>` + META.tapes.map(t=>`<option value="${t.mm}">${t.mm} мм</option>`).join("");
+  tape.value = "auto";
   $("#barcodeType").innerHTML = META.barcode_types.map(b=>`<option>${b}</option>`).join("");
   const labels = {text:"Текст", qr:"QR", barcode:"Штрихкод", text_qr:"Текст + QR",
     cable_flag:"Флажок кабеля", cable_wrap:"Обёртка кабеля", patch_panel:"Патч-панель"};
@@ -285,7 +284,7 @@ function collectLines(){
 
 function buildSpec(){
   return {
-    tape_mm:+$("#tape").value, label_type:TYPE, lines:collectLines(),
+    tape_mm:tapeMm(), label_type:TYPE, lines:collectLines(),
     length_mode:$("#lenMode").value, length_mm:+$("#lenMm").value, margin_mm:+$("#margin").value,
     code_data:$("#codeData").value, barcode_type:$("#barcodeType").value,
     show_code_text:$("#showCodeText").checked, invert:$("#invert").checked,
@@ -315,7 +314,11 @@ async function checkStatus(){
     b.className = "badge "+(s.connected?"on":"off");
     b.textContent = s.connected ? (s.tape_mm?`принтер: лента ${s.tape_mm}мм`:"принтер подключён") : "принтер не найден";
     b.title = s.detail;
-    if(s.connected && s.tape_mm){ $("#tape").value=s.tape_mm; scheduleRender(); }
+    const autoOpt=$("#tape").querySelector('option[value="auto"]');
+    const prev=detectedTape;
+    detectedTape = (s.connected && s.tape_mm) ? s.tape_mm : null;
+    if(autoOpt) autoOpt.textContent = detectedTape ? `Авто: ${detectedTape}мм` : "Авто";
+    if($("#tape").value==="auto" && detectedTape!==prev) scheduleRender();
   }catch(e){ $("#status").textContent="статус недоступен"; }
 }
 
@@ -471,56 +474,23 @@ async function printBatch(){
 }
 $("#batchBtn").onclick = printBatch;
 
-// --- template save/load for agent/LLM ---
+// --- CSV template export for agent/LLM ---
 function download(name, text, mime){
   const b=new Blob([text],{type:mime}); const u=URL.createObjectURL(b);
   const a=document.createElement("a"); a.href=u; a.download=name; a.click(); URL.revokeObjectURL(u);
 }
-function placeholders(){
-  const spec=buildSpec(); const set=new Set(); const re=/\{([^}]+)\}/g;
-  const scan=s=>{ let m; while((m=re.exec(s||""))!==null) set.add(m[1]); };
-  spec.lines.forEach(l=>scan(l.text)); scan(spec.code_data);
-  return [...set];
-}
-$("#saveJson").onclick=()=>download("label_template.json", JSON.stringify(buildSpec(),null,2), "application/json");
+// Save the current label as a grouped-multiline CSV template (round-trips with the
+// grouped CSV import): one row per label line, keeping per-line formatting + tape.
 $("#saveCsv").onclick=()=>{
-  let cols=placeholders();
-  if(!cols.length){ cols=buildSpec().lines.map((_,i)=>"line"+(i+1)); }
-  const example=cols.map(c=>c.toLowerCase().includes("ip")?"192.168.0.1":(c.toLowerCase().includes("name")?"Server-01":"value")).join(",");
-  const csv=cols.join(",")+"\n"+example+"\n";
-  download("label_data.csv", csv, "text/csv");
-  toast("CSV-шаблон: колонки "+cols.join(", "));
-};
-function applySpec(s){
-  if(!s) return;
-  if(s.label_type){ TYPE=s.label_type; $("#typeChips").querySelectorAll(".chip").forEach(x=>x.classList.toggle("sel",x.dataset.t===TYPE)); applyTypeUI(); }
-  if(s.tape_mm) $("#tape").value=s.tape_mm;
-  if(s.length_mode) $("#lenMode").value=s.length_mode;
-  if(s.length_mm!=null) $("#lenMm").value=s.length_mm;
-  if(s.margin_mm!=null) $("#margin").value=s.margin_mm;
-  if(s.code_data!=null) $("#codeData").value=s.code_data;
-  if(s.barcode_type) $("#barcodeType").value=s.barcode_type;
-  if(s.cable_diameter_mm!=null) $("#cableDia").value=s.cable_diameter_mm;
-  if(s.wrap_mm!=null) $("#wrapMm").value=s.wrap_mm;
-  if(s.repeat!=null) $("#repeat").value=s.repeat;
-  if(s.ports!=null) $("#ports").value=s.ports;
-  if(s.port_pitch_mm!=null) $("#pitch").value=s.port_pitch_mm;
-  if(Array.isArray(s.lines)&&s.lines.length){
-    $("#lines").innerHTML=""; s.lines.forEach(ln=>addLine(ln.text||""));
-    [...$("#lines").querySelectorAll(".line")].forEach((d,i)=>{
-      const ln=s.lines[i]; if(!ln) return;
-      if(ln.font) d.querySelector(".ft").value=ln.font;
-      d.querySelector(".sz").value=ln.size_pt||0;
-      d.querySelector(".al").value=ln.align||"center";
-      d.querySelector(".bd").checked=!!ln.bold;
-    });
-  }
-  scheduleRender();
-}
-$("#loadJson").onchange=async e=>{
-  const f=e.target.files[0]; if(!f) return;
-  try{ applySpec(JSON.parse(await f.text())); toast("Шаблон загружен"); }
-  catch(err){ toast("Ошибка JSON: "+err); }
+  const spec=buildSpec();
+  const cols=["group","line","text","bold","align","font","size_pt","line_spacing","tape_mm"];
+  const esc=v=>{ v=String(v??""); return /[",\n]/.test(v) ? '"'+v.replace(/"/g,'""')+'"' : v; };
+  const rows=spec.lines.map((ln,i)=>
+    [ "LABEL-01", i+1, ln.text||"{текст"+(i+1)+"}", ln.bold?1:0, ln.align||"center",
+      ln.font||"DejaVu Sans", ln.size_pt||0, spec.line_spacing, spec.tape_mm ].map(esc).join(","));
+  const csv=cols.join(",")+"\n"+rows.join("\n")+"\n";
+  download("label_template.csv", csv, "text/csv");
+  toast("CSV-шаблон сохранён ("+spec.lines.length+" строк). Дублируй группы и наполняй текст.");
 };
 // cable type preset -> diameter (0 = manual, keep field editable)
 $("#cableType").onchange=()=>{ const v=+$("#cableType").value; if(v>0){ $("#cableDia").value=v; scheduleRender(); } };
@@ -529,14 +499,14 @@ $("#cableDia").addEventListener("input",()=>{ $("#cableType").value="0"; });
 // wire global controls
 ["#tape","#lenMode","#lenMm","#margin","#invert","#codeData","#barcodeType","#showCodeText","#cableDia","#wrapMm","#flagMirror","#repeat","#ports","#pitch","#lineSpacing"].forEach(s=>{ const el=$(s); el.oninput=scheduleRender; el.onchange=scheduleRender; });
 $("#lineSpacing").addEventListener("input",()=>{ $("#lsVal").textContent=(+$("#lineSpacing").value).toFixed(2); });
+$("#lenMode").addEventListener("change", applyLenMode);
 $("#addLine").onclick=()=>addLine("");
 $("#printBtn").onclick=doPrint;
 $("#cutBtn").onclick=async()=>{ const j=await (await fetch("/api/cut",{method:"POST"})).json(); toast(j.message||"обрез"); };
 $("#stopBtn").onclick=async()=>{ await fetch("/api/stop",{method:"POST"}); toast("Стоп: остановка после текущей наклейки"); };
 $("#refreshBtn").onclick=doRender;
-$("#autoTape").onclick=checkStatus;
 
-(async()=>{ await loadMeta(); await checkStatus(); doRender(); setInterval(checkStatus, 8000); })();
+(async()=>{ await loadMeta(); applyLenMode(); await checkStatus(); doRender(); setInterval(checkStatus, 8000); })();
 </script>
 </body>
 </html>
