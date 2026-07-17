@@ -354,26 +354,22 @@ MARGIN_DOTS = 64  # ~9 mm head-to-cutter dead zone (per end)
 
 
 def to_png_bytes(img: Image.Image, scale: int = 3, show_margins: bool = True,
-                 margins: str = "both") -> bytes:
+                 band_shade: int = 0xCC) -> bytes:
     """Upscaled PNG for on-screen preview (nearest-neighbour keeps dots crisp).
 
-    When show_margins is set, the ~9 mm unprintable dead zone the printer leaves after
-    each cut is drawn as a grey band. `margins` selects which ends get the band:
-    "both" (single-label preview), "left" (leading only - used on the batch strip so the
-    trailing band before the cut line is dropped), or "none".
+    When show_margins is set, the symmetric ~9 mm end margins are added on BOTH sides.
+    band_shade colours them: 0xCC = grey dead-zone viz (single-label preview), 255 =
+    plain white blank tape (batch strip - keeps the symmetric margins without a grey band).
     """
     big = img.resize((img.width * scale, img.height * scale), Image.NEAREST).convert("L")
-    if show_margins and margins != "none":
+    if show_margins:
         m = MARGIN_DOTS * scale
-        left = m if margins in ("both", "left") else 0
-        right = m if margins in ("both", "right") else 0
-        canvas = Image.new("L", (big.width + left + right, big.height), 255)
-        canvas.paste(big, (left, 0))
-        band = Image.new("L", (m, big.height), 0xCC)  # light grey dead-zone band
-        if left:
+        canvas = Image.new("L", (big.width + 2 * m, big.height), 255)
+        canvas.paste(big, (m, 0))
+        if band_shade != 255:
+            band = Image.new("L", (m, big.height), band_shade)
             canvas.paste(band, (0, 0))
-        if right:
-            canvas.paste(band, (big.width + left, 0))
+            canvas.paste(band, (big.width + m, 0))
         big = canvas
     buf = io.BytesIO()
     big.save(buf, format="PNG")
