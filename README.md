@@ -1,8 +1,9 @@
 # LW700Print
 
 Print labels on the **Epson LabelWorks LW-700** directly over USB from Python -
-no Epson driver, no print spooler, no proprietary software. Ships with a small web
-UI (label editor with QR / barcodes / CSV batch) and a reusable encoder library.
+no Epson driver, no print spooler, no proprietary software. Ships with a full web
+label editor (text, QR, barcodes, images/logos, cable flags, patch panels, an icon
+palette, CSV batch printing, RU/EN interface) and a reusable encoder library.
 
 Built because Epson's official driver **no longer works on modern macOS**: Apple
 removed third-party USB print-class plugin loading from the CUPS `usb` backend, so
@@ -41,10 +42,52 @@ python3 -m venv venv && ./venv/bin/pip install -r requirements.txt
 ./venv/bin/python app.py
 ```
 
-In the editor: pick a label type (text / QR / barcode / text+QR), tape width,
-1-8 lines with per-line font/size/alignment, optional CSV batch, then **Print**.
 If the printer is connected it prints directly; otherwise it falls back to saving
 the exact print bitmap as a PNG under `output/`.
+
+## Label editor (web UI)
+
+`python app.py` serves the editor at http://127.0.0.1:8099. Layout: a top ribbon
+(tape + label type), an editor column on the left, and a live preview on the right.
+Toggle **RU / EN** with the button in the header (the choice is remembered).
+
+**Tape (ribbon).** Width is `Auto` (read from the connected printer) or a fixed
+value; length is `Auto` (fit to content) or a fixed mm value; plus margin and an
+invert (white-on-black) switch.
+
+**Label types.** `Text` and `Cable flag` are one-click chips; the rest are in the
+**More types** dropdown:
+
+- `Text` - 1 to 8 lines, per-line font / size (0 = auto-fit) / alignment / bold,
+  and line spacing. Seven quick-layout buttons preset common arrangements
+  (1-4 lines, header + 1/2/3 captions).
+- `QR` - QR code only. `Barcode` - Code128 / EAN / UPC / ... with optional caption.
+- `Text + QR` - text with a QR to the left or right (selectable side).
+- `Image` / `Image + text` - upload a PNG/JPG logo (scaled to tape height, dithered
+  to 1-bit) or pick from the built-in **icon palette** (6 themes x 24 monochrome
+  icons: datacenter, arrows, office, home, electricity, emoji).
+- `Cable flag` / `Image + flag` / `QR + flag` - a two-sided cable flag (text, logo
+  or QR at both ends, mirrored, with a centering stripe and a wrap gap sized from the
+  cable diameter). `Cable wrap` repeats the text along the length. `Patch panel`
+  lays out one labelled cell per port.
+
+**CSV batch printing.** Load a CSV to print a run. Two modes:
+
+- Placeholder mode: build one label with `{column}` placeholders in the text/code,
+  and each row fills them in.
+- Grouped multiline mode (tick *Multiline*): a long-format CSV with
+  `group,line,text,bold,align,font,size_pt,line_spacing,tape_mm` builds one label per
+  `group`, one row per line, keeping per-line formatting.
+
+The table below the preview supports search/filter, column sort, and per-row
+selection; drag its top border to resize it. **Preview** shows the whole batch laid
+out as one continuous tape (wrapping to new rows) with the total length and a
+per-label number/size caption; already-printed rows are marked. **Save label as CSV
+template** exports the current label as a grouped CSV skeleton for a user or LLM to
+fill and re-import.
+
+**Print / Cut / Stop.** `Print` sends the current label (or the selected batch when
+a CSV is loaded); `Cut` feeds and cuts; `Stop` halts a batch after the current label.
 
 ## Use as a library
 
@@ -102,9 +145,13 @@ docs/PROTOCOL.md   reverse-engineered protocol reference
 
 ## Supported
 
-- Tapes: 6 / 9 / 12 / 18 / 24 mm. Label types: text (1-8 lines), QR, barcode
-  (Code128 / EAN / UPC / ...), text+QR. Cyrillic and other fonts via bundled DejaVu.
-- Tape cut modes (each job / each page / none).
+- Tapes: 6 / 9 / 12 / 18 / 24 mm (width auto-detected).
+- Label types: text (1-8 lines), QR, barcode (Code128 / EAN / UPC / ...), text+QR,
+  image / image+text, cable flag / image+flag / QR+flag, cable wrap, patch panel.
+- Icon palette (144 monochrome icons, 6 themes) and PNG/JPG logo import (dithered).
+- CSV batch printing (placeholder and grouped-multiline), continuous-tape batch
+  preview, CSV template export. RU / EN interface.
+- Cyrillic and other fonts via bundled DejaVu. Tape cut modes (each job / page / none).
 
 Other models in the family (LW-600P/900P/1000P) use a similar language but were not
 tested here; the `O`/`W`/`t` tape-kind parameters and vendor "engage" requests differ.
