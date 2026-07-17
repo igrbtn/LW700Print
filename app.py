@@ -122,7 +122,7 @@ async def api_render_batch(request: Request):
     for i, row in enumerate(rows[:1000]):
         spec = render.LabelSpec.from_dict(_apply_template(template, row))
         img = render.render(spec)
-        png = render.to_png_bytes(img, scale=2)
+        png = render.to_png_bytes(img, scale=2, show_margins=False)
         items.append({
             "index": i,
             "png": "data:image/png;base64," + base64.b64encode(png).decode(),
@@ -141,7 +141,7 @@ async def api_render_specs(request: Request):
     for i, sd in enumerate(specs[:1000]):
         spec = render.LabelSpec.from_dict(sd)
         img = render.render(spec)
-        png = render.to_png_bytes(img, scale=2)
+        png = render.to_png_bytes(img, scale=2, show_margins=False)
         items.append({"index": i, "png": "data:image/png;base64," + base64.b64encode(png).decode(),
                       "mm": round(img.width / 180 * 25.4, 1), "tape_mm": spec.tape_mm})
     return {"count": len(items), "items": items}

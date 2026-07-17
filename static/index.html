@@ -537,6 +537,7 @@ async function refreshBatch(quiet){
     r = await fetch("/api/render_batch",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({template:buildSpec(), rows})});
   }
   const j = await r.json();
+  const totalMm = j.items.reduce((a,it)=> a + it.mm, 0);   // exact sum of the per-label lengths shown above
   const strip = j.items.map((it,k)=>{
     const gi = rows[k] ? rows[k].__i : it.index;
     return `<div class="tcell ${csvPrinted.has(gi)?'printed':''}">`+
@@ -544,7 +545,7 @@ async function refreshBatch(quiet){
       `<div class="timg"><img src="${it.png}"></div></div>`;
   }).join("");
   $("#batchGallery").innerHTML =
-    `<div class="tapeHdr">Партия: ${j.count} наклеек</div>`+
+    `<div class="tapeHdr">Партия: ${j.count} наклеек · длина ~${Math.round(totalMm)} мм</div>`+
     `<div class="tapeStrip">${strip}</div>`;
   showGallery(true);
   $("#batchBtn").classList.remove("hidden");
