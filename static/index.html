@@ -10,14 +10,16 @@
     --fg:#e6e9ef; --mut:#98a2b3; --acc:#4f8cff; --acc2:#2b6be0; --ok:#37c871; --warn:#f5a623;
   }
   * { box-sizing:border-box; }
-  body { margin:0; font:14px/1.4 -apple-system,Segoe UI,Roboto,sans-serif; background:var(--bg); color:var(--fg); }
-  header { display:flex; align-items:center; gap:14px; padding:10px 16px; background:var(--panel); border-bottom:1px solid var(--line); position:sticky; top:0; z-index:5; }
+  body { margin:0; font:14px/1.4 -apple-system,Segoe UI,Roboto,sans-serif; background:var(--bg); color:var(--fg); height:100vh; display:flex; flex-direction:column; }
+  header { display:flex; align-items:center; gap:14px; padding:10px 16px; background:var(--panel); border-bottom:1px solid var(--line); z-index:5; }
   header h1 { font-size:15px; margin:0; font-weight:650; letter-spacing:.2px; }
   header .sp { flex:1; }
+  #typeRibbon { display:flex; align-items:center; gap:12px; padding:8px 16px; background:var(--panel); border-bottom:1px solid var(--line); }
+  #typeRibbon .rlabel { color:var(--mut); font-size:12px; text-transform:uppercase; letter-spacing:.5px; white-space:nowrap; }
   .badge { font-size:12px; padding:4px 10px; border-radius:20px; background:var(--panel2); color:var(--mut); border:1px solid var(--line); }
   .badge.on { color:var(--ok); border-color:#1f5f3a; }
   .badge.off { color:var(--warn); border-color:#5f4a1f; }
-  main { display:grid; grid-template-columns:minmax(360px,440px) 1fr; gap:0; height:calc(100vh - 49px); }
+  main { display:grid; grid-template-columns:minmax(360px,440px) 1fr; gap:0; flex:1; min-height:0; }
   .editor { overflow-y:auto; padding:14px 16px; border-right:1px solid var(--line); }
   .stage { display:flex; flex-direction:column; }
   .stageTop { padding:14px 16px; border-bottom:1px solid var(--line); display:flex; align-items:center; gap:12px; }
@@ -90,13 +92,12 @@
   <button class="ghost" id="stopBtn">Стоп</button>
   <button class="primary" id="printBtn">Печать</button>
 </header>
+<div id="typeRibbon">
+  <span class="rlabel">Тип наклейки</span>
+  <div class="chips" id="typeChips"></div>
+</div>
 <main>
   <section class="editor">
-    <fieldset>
-      <legend>Тип наклейки</legend>
-      <div class="chips" id="typeChips"></div>
-    </fieldset>
-
     <fieldset>
       <legend>Лента</legend>
       <label class="f">Ширина ленты</label>
