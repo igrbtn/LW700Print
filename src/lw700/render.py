@@ -353,20 +353,27 @@ def _patch_panel(spec: "LabelSpec", height: int, margin: int) -> Image.Image:
 MARGIN_DOTS = 64  # ~9 mm head-to-cutter dead zone (per end)
 
 
-def to_png_bytes(img: Image.Image, scale: int = 3, show_margins: bool = True) -> bytes:
+def to_png_bytes(img: Image.Image, scale: int = 3, show_margins: bool = True,
+                 margins: str = "both") -> bytes:
     """Upscaled PNG for on-screen preview (nearest-neighbour keeps dots crisp).
 
-    When show_margins is set, the ~9 mm unprintable dead zones the printer adds on
-    both ends are drawn as grey bands so the physical label is represented truthfully.
+    When show_margins is set, the ~9 mm unprintable dead zone the printer leaves after
+    each cut is drawn as a grey band. `margins` selects which ends get the band:
+    "both" (single-label preview), "left" (leading only - used on the batch strip so the
+    trailing band before the cut line is dropped), or "none".
     """
     big = img.resize((img.width * scale, img.height * scale), Image.NEAREST).convert("L")
-    if show_margins:
+    if show_margins and margins != "none":
         m = MARGIN_DOTS * scale
-        canvas = Image.new("L", (big.width + 2 * m, big.height), 255)
-        canvas.paste(big, (m, 0))
+        left = m if margins in ("both", "left") else 0
+        right = m if margins in ("both", "right") else 0
+        canvas = Image.new("L", (big.width + left + right, big.height), 255)
+        canvas.paste(big, (left, 0))
         band = Image.new("L", (m, big.height), 0xCC)  # light grey dead-zone band
-        canvas.paste(band, (0, 0))
-        canvas.paste(band, (big.width + m, 0))
+        if left:
+            canvas.paste(band, (0, 0))
+        if right:
+            canvas.paste(band, (big.width + left, 0))
         big = canvas
     buf = io.BytesIO()
     big.save(buf, format="PNG")
