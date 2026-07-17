@@ -608,7 +608,19 @@ const ICONS = {
     {n:"Диск / хранилище", s:'<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="2.5"/><line x1="14" y1="14" x2="18" y2="18"/>'},
     {n:"Порт RJ45", s:'<path d="M8 4h8v6l1 1v8H7v-8l1-1z"/><line x1="9.5" y1="16" x2="9.5" y2="19"/><line x1="12" y1="16" x2="12" y2="19"/><line x1="14.5" y1="16" x2="14.5" y2="19"/>'},
     {n:"Охлаждение", s:'<line x1="12" y1="3" x2="12" y2="21"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="5.5" y1="5.5" x2="18.5" y2="18.5"/><line x1="18.5" y1="5.5" x2="5.5" y2="18.5"/>'},
-    {n:"Консоль", s:'<rect x="3" y="4" width="18" height="12" rx="1"/><polyline points="7 8 10 11 7 14"/><line x1="12" y1="14" x2="16" y2="14"/><line x1="8" y1="20" x2="16" y2="20"/><line x1="12" y1="16" x2="12" y2="20"/>'}
+    {n:"Консоль", s:'<rect x="3" y="4" width="18" height="12" rx="1"/><polyline points="7 8 10 11 7 14"/><line x1="12" y1="14" x2="16" y2="14"/><line x1="8" y1="20" x2="16" y2="20"/><line x1="12" y1="16" x2="12" y2="20"/>'},
+    {n:"Терминал", s:'<rect x="3" y="4" width="18" height="16" rx="1"/><polyline points="7 9 10 12 7 15"/><line x1="12" y1="15" x2="16" y2="15"/>'},
+    {n:"Патч-панель", s:'<rect x="3" y="8" width="18" height="8" rx="1"/><line x1="7" y1="8" x2="7" y2="16"/><line x1="11" y1="8" x2="11" y2="16"/><line x1="15" y1="8" x2="15" y2="16"/><line x1="19" y1="8" x2="19" y2="16"/>'},
+    {n:"Кластер", s:'<circle cx="12" cy="5" r="2"/><circle cx="5" cy="18" r="2"/><circle cx="19" cy="18" r="2"/><path d="M12 7v3M11 11l-4 5M13 11l4 5"/>'},
+    {n:"Мониторинг", s:'<rect x="3" y="4" width="18" height="16" rx="1"/><polyline points="6 15 10 11 13 14 18 8"/>'},
+    {n:"Бэкап", s:'<rect x="8" y="8" width="12" height="12" rx="1"/><path d="M16 8V5a1 1 0 0 0-1-1H4a1 1 0 0 0-1 1v11a1 1 0 0 0 1 1h3"/>'},
+    {n:"PDU / питание", s:'<rect x="3" y="9" width="18" height="6" rx="1"/><circle cx="7" cy="12" r="1" fill="#000" stroke="none"/><circle cx="11" cy="12" r="1" fill="#000" stroke="none"/><circle cx="15" cy="12" r="1" fill="#000" stroke="none"/><line x1="19" y1="9" x2="19" y2="15"/>'},
+    {n:"Оптолинк", s:'<circle cx="6" cy="12" r="1.5" fill="#000" stroke="none"/><circle cx="18" cy="12" r="1.5" fill="#000" stroke="none"/><path d="M7.5 12h9"/>'},
+    {n:"VPN-щит", s:'<path d="M12 3l7 3v5c0 5-3 8-7 10-4-2-7-5-7-10V6z"/><path d="M9 12l2 2 4-4"/>'},
+    {n:"Виртуалка", s:'<rect x="3" y="5" width="18" height="12" rx="1"/><polygon points="10 9 15 11 10 13"/><line x1="8" y1="20" x2="16" y2="20"/>'},
+    {n:"Контейнер", s:'<rect x="3" y="7" width="18" height="10" rx="1"/><line x1="9" y1="7" x2="9" y2="17"/><line x1="15" y1="7" x2="15" y2="17"/>'},
+    {n:"ЦОД-здание", s:'<rect x="4" y="6" width="16" height="14"/><rect x="7" y="9" width="2" height="2" fill="#000" stroke="none"/><rect x="11" y="9" width="2" height="2" fill="#000" stroke="none"/><rect x="15" y="9" width="2" height="2" fill="#000" stroke="none"/><rect x="7" y="14" width="2" height="2" fill="#000" stroke="none"/><rect x="11" y="14" width="2" height="2" fill="#000" stroke="none"/><rect x="15" y="14" width="2" height="2" fill="#000" stroke="none"/>'},
+    {n:"Бирка", s:'<path d="M4 12l8-8h5a2 2 0 0 1 2 2v5l-8 8z"/><circle cx="15" cy="9" r="1.2" fill="#000" stroke="none"/>'}
   ],
   "Стрелки": [
     {n:"Вверх", s:'<line x1="12" y1="20" x2="12" y2="5"/><polyline points="6 11 12 5 18 11"/>'},
@@ -622,7 +634,19 @@ const ICONS = {
     {n:"Влево-вправо", s:'<polyline points="7 8 3 12 7 16"/><polyline points="17 8 21 12 17 16"/><line x1="3" y1="12" x2="21" y2="12"/>'},
     {n:"Вверх-вниз", s:'<polyline points="8 7 12 3 16 7"/><polyline points="8 17 12 21 16 17"/><line x1="12" y1="3" x2="12" y2="21"/>'},
     {n:"Возврат", s:'<polyline points="9 10 4 15 9 20"/><path d="M20 4v7a4 4 0 0 1-4 4H4"/>'},
-    {n:"Обновить", s:'<path d="M20 11a8 8 0 1 0-1 5"/><polyline points="20 5 20 11 14 11"/>'}
+    {n:"Обновить", s:'<path d="M20 11a8 8 0 1 0-1 5"/><polyline points="20 5 20 11 14 11"/>'},
+    {n:"Вход", s:'<path d="M15 3h4a1 1 0 0 1 1 1v16a1 1 0 0 1-1 1h-4"/><polyline points="10 8 15 12 10 16"/><line x1="15" y1="12" x2="3" y2="12"/>'},
+    {n:"Выход", s:'<path d="M9 3H5a1 1 0 0 0-1 1v16a1 1 0 0 0 1 1h4"/><polyline points="16 8 21 12 16 16"/><line x1="21" y1="12" x2="9" y2="12"/>'},
+    {n:"Развернуть", s:'<polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/>'},
+    {n:"Свернуть", s:'<polyline points="4 14 10 14 10 20"/><polyline points="20 10 14 10 14 4"/><line x1="14" y1="10" x2="21" y2="3"/><line x1="3" y1="21" x2="10" y2="14"/>'},
+    {n:"Вверх в круге", s:'<circle cx="12" cy="12" r="9"/><polyline points="8 12 12 8 16 12"/><line x1="12" y1="8" x2="12" y2="16"/>'},
+    {n:"Вниз в круге", s:'<circle cx="12" cy="12" r="9"/><polyline points="8 12 12 16 16 12"/><line x1="12" y1="16" x2="12" y2="8"/>'},
+    {n:"Вправо в круге", s:'<circle cx="12" cy="12" r="9"/><polyline points="12 8 16 12 12 16"/><line x1="16" y1="12" x2="8" y2="12"/>'},
+    {n:"Влево в круге", s:'<circle cx="12" cy="12" r="9"/><polyline points="12 8 8 12 12 16"/><line x1="8" y1="12" x2="16" y2="12"/>'},
+    {n:"Против часовой", s:'<path d="M4 12a8 8 0 1 0 2.3-5.6"/><polyline points="4 4 4 8 8 8"/>'},
+    {n:"Перемещение", s:'<line x1="12" y1="3" x2="12" y2="21"/><line x1="3" y1="12" x2="21" y2="12"/><polyline points="9 6 12 3 15 6"/><polyline points="9 18 12 21 15 18"/><polyline points="6 9 3 12 6 15"/><polyline points="18 9 21 12 18 15"/>'},
+    {n:"Тренд вверх", s:'<polyline points="3 17 9 11 13 15 21 7"/><polyline points="16 7 21 7 21 12"/>'},
+    {n:"Тренд вниз", s:'<polyline points="3 7 9 13 13 9 21 17"/><polyline points="16 17 21 17 21 12"/>'}
   ],
   "Офис": [
     {n:"Принтер", s:'<polyline points="6 9 6 3 18 3 18 9"/><rect x="4" y="9" width="16" height="7" rx="1"/><rect x="7" y="14" width="10" height="6"/><circle cx="17" cy="12" r="0.7" fill="#000" stroke="none"/>'},
@@ -636,7 +660,19 @@ const ICONS = {
     {n:"Календарь", s:'<rect x="3" y="5" width="18" height="16" rx="1"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="8" y1="3" x2="8" y2="7"/><line x1="16" y1="3" x2="16" y2="7"/>'},
     {n:"Скрепка", s:'<path d="M20 12l-8 8a5 5 0 0 1-7-7l8-8a3 3 0 0 1 4 4l-8 8a1 1 0 0 1-2-2l7-7"/>'},
     {n:"Клавиатура", s:'<rect x="2" y="7" width="20" height="10" rx="1"/><line x1="7" y1="14" x2="17" y2="14"/><circle cx="6" cy="10.5" r="0.5" fill="#000" stroke="none"/><circle cx="9" cy="10.5" r="0.5" fill="#000" stroke="none"/><circle cx="12" cy="10.5" r="0.5" fill="#000" stroke="none"/><circle cx="15" cy="10.5" r="0.5" fill="#000" stroke="none"/><circle cx="18" cy="10.5" r="0.5" fill="#000" stroke="none"/>'},
-    {n:"Настройки", s:'<circle cx="12" cy="12" r="3"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M18.4 5.6l-2.1 2.1M7.7 16.3l-2.1 2.1"/>'}
+    {n:"Настройки", s:'<circle cx="12" cy="12" r="3"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M18.4 5.6l-2.1 2.1M7.7 16.3l-2.1 2.1"/>'},
+    {n:"Стол", s:'<rect x="3" y="6" width="18" height="3"/><line x1="5" y1="9" x2="5" y2="20"/><line x1="19" y1="9" x2="19" y2="20"/><line x1="5" y1="14" x2="11" y2="14"/>'},
+    {n:"Кресло", s:'<path d="M7 4v8h10V4"/><line x1="6" y1="20" x2="6" y2="12"/><line x1="18" y1="20" x2="18" y2="12"/><line x1="6" y1="16" x2="18" y2="16"/>'},
+    {n:"Кофе", s:'<path d="M4 8h13v6a4 4 0 0 1-4 4H8a4 4 0 0 1-4-4z"/><path d="M17 9h2a2 2 0 0 1 0 5h-2"/><line x1="7" y1="3" x2="7" y2="5"/><line x1="11" y1="3" x2="11" y2="5"/>'},
+    {n:"Книга", s:'<path d="M4 5a1 1 0 0 1 1-1h6v16H5a1 1 0 0 1-1-1z"/><path d="M20 5a1 1 0 0 0-1-1h-6v16h6a1 1 0 0 0 1-1z"/>'},
+    {n:"Клипборд", s:'<rect x="5" y="4" width="14" height="17" rx="1"/><rect x="9" y="2" width="6" height="4" rx="1"/><line x1="8" y1="11" x2="16" y2="11"/><line x1="8" y1="15" x2="14" y2="15"/>'},
+    {n:"Презентация", s:'<rect x="3" y="4" width="18" height="12" rx="1"/><line x1="12" y1="16" x2="12" y2="20"/><line x1="8" y1="20" x2="16" y2="20"/><rect x="7" y="9" width="2" height="4"/><rect x="11" y="7" width="2" height="6"/><rect x="15" y="10" width="2" height="3"/>'},
+    {n:"Часы", s:'<circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 16 14"/>'},
+    {n:"Заметка", s:'<path d="M5 4h14v11l-4 4H5z"/><polyline points="19 15 15 15 15 19"/>'},
+    {n:"Корзина", s:'<polyline points="4 7 20 7"/><path d="M6 7l1 13a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1l1-13"/><path d="M9 7V4h6v3"/>'},
+    {n:"Поиск", s:'<circle cx="11" cy="11" r="6"/><line x1="15.5" y1="15.5" x2="20" y2="20"/>'},
+    {n:"Пользователь", s:'<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/>'},
+    {n:"Бейдж", s:'<rect x="5" y="3" width="14" height="18" rx="1"/><circle cx="12" cy="9" r="3"/><path d="M8 18a4 4 0 0 1 8 0"/>'}
   ],
   "Дом": [
     {n:"Дом", s:'<path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/><rect x="10" y="14" width="4" height="6"/>'},
@@ -650,7 +686,19 @@ const ICONS = {
     {n:"Капля / вода", s:'<path d="M12 3s6 7 6 11a6 6 0 0 1-12 0c0-4 6-11 6-11z"/>'},
     {n:"Термостат", s:'<path d="M12 3a3 3 0 0 0-3 3v8a4 4 0 1 0 6 0V6a3 3 0 0 0-3-3z"/><circle cx="12" cy="17" r="1.6" fill="#000" stroke="none"/>'},
     {n:"Растение", s:'<path d="M12 21v-8"/><path d="M12 13c-3 0-5-2-5-5 3 0 5 2 5 5z"/><path d="M12 12c0-3 2-5 5-5 0 3-2 5-5 5z"/>'},
-    {n:"Щит / охрана", s:'<path d="M12 3l7 3v5c0 5-3 8-7 10-4-2-7-5-7-10V6z"/>'}
+    {n:"Щит / охрана", s:'<path d="M12 3l7 3v5c0 5-3 8-7 10-4-2-7-5-7-10V6z"/>'},
+    {n:"Диван", s:'<path d="M4 12v-2a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v2"/><path d="M2 12a2 2 0 0 1 2 2v3h16v-3a2 2 0 0 1 2-2"/><line x1="5" y1="17" x2="5" y2="20"/><line x1="19" y1="17" x2="19" y2="20"/>'},
+    {n:"Ванна", s:'<path d="M4 12h16v3a4 4 0 0 1-4 4H8a4 4 0 0 1-4-4z"/><path d="M5 12V7a2 2 0 0 1 4 0"/>'},
+    {n:"Плита", s:'<rect x="4" y="6" width="16" height="14" rx="1"/><circle cx="9" cy="11" r="2"/><circle cx="15" cy="11" r="2"/><line x1="7" y1="16" x2="17" y2="16"/>'},
+    {n:"Холодильник", s:'<rect x="6" y="3" width="12" height="18" rx="1"/><line x1="6" y1="10" x2="18" y2="10"/><line x1="9" y1="6" x2="9" y2="8"/><line x1="9" y1="12" x2="9" y2="15"/>'},
+    {n:"Лестница", s:'<line x1="7" y1="3" x2="7" y2="21"/><line x1="17" y1="3" x2="17" y2="21"/><line x1="7" y1="7" x2="17" y2="7"/><line x1="7" y1="11" x2="17" y2="11"/><line x1="7" y1="15" x2="17" y2="15"/>'},
+    {n:"Гараж", s:'<path d="M3 20V9l9-5 9 5v11"/><rect x="6" y="12" width="12" height="8"/><line x1="6" y1="15" x2="18" y2="15"/>'},
+    {n:"Камин / огонь", s:'<path d="M12 3s5 4 5 9a5 5 0 0 1-10 0c0-2 1-3 2-4 0 1 1 2 2 2-1-3 1-5 1-7z"/>'},
+    {n:"Звонок", s:'<rect x="7" y="4" width="10" height="16" rx="2"/><circle cx="12" cy="10" r="2"/><line x1="12" y1="14" x2="12" y2="17"/>'},
+    {n:"Картина", s:'<rect x="4" y="4" width="16" height="16" rx="1"/><circle cx="9" cy="9" r="1.5"/><path d="M5 18l4-5 3 3 3-4 4 6"/>'},
+    {n:"Забор", s:'<path d="M4 20V9l2-2 2 2v11"/><path d="M10 20V9l2-2 2 2v11"/><path d="M16 20V9l2-2 2 2v11"/><line x1="3" y1="13" x2="21" y2="13"/>'},
+    {n:"Розетка", s:'<circle cx="12" cy="12" r="9"/><circle cx="9.5" cy="11" r="1" fill="#000" stroke="none"/><circle cx="14.5" cy="11" r="1" fill="#000" stroke="none"/><line x1="12" y1="13" x2="12" y2="16"/>'},
+    {n:"Шкаф", s:'<rect x="5" y="3" width="14" height="18" rx="1"/><line x1="12" y1="3" x2="12" y2="21"/><line x1="10" y1="10" x2="10" y2="13"/><line x1="14" y1="10" x2="14" y2="13"/>'}
   ],
   "Электричество": [
     {n:"Молния", s:'<path d="M13 2L4 14h6l-1 8 9-12h-6z" fill="#000" stroke="none"/>'},
@@ -664,7 +712,19 @@ const ICONS = {
     {n:"Солнце / солар", s:'<circle cx="12" cy="12" r="4"/><line x1="12" y1="2" x2="12" y2="5"/><line x1="12" y1="19" x2="12" y2="22"/><line x1="2" y1="12" x2="5" y2="12"/><line x1="19" y1="12" x2="22" y2="12"/><line x1="5" y1="5" x2="7" y2="7"/><line x1="17" y1="17" x2="19" y2="19"/><line x1="19" y1="5" x2="17" y2="7"/><line x1="7" y1="17" x2="5" y2="19"/>'},
     {n:"Заземление", s:'<line x1="12" y1="3" x2="12" y2="12"/><line x1="6" y1="12" x2="18" y2="12"/><line x1="8.5" y1="16" x2="15.5" y2="16"/><line x1="10.5" y1="20" x2="13.5" y2="20"/>'},
     {n:"Провод", s:'<path d="M3 12c2-5 4-5 8 0s6 5 9 0"/>'},
-    {n:"Лампа", s:'<path d="M9 18h6"/><path d="M10 21h4"/><path d="M12 3a6 6 0 0 0-4 10c1 1 1 2 1 3h6c0-1 0-2 1-3a6 6 0 0 0-4-10z"/>'}
+    {n:"Лампа", s:'<path d="M9 18h6"/><path d="M10 21h4"/><path d="M12 3a6 6 0 0 0-4 10c1 1 1 2 1 3h6c0-1 0-2 1-3a6 6 0 0 0-4-10z"/>'},
+    {n:"Батарея заряд", s:'<rect x="3" y="8" width="16" height="9" rx="1"/><line x1="19" y1="11" x2="22" y2="11"/><line x1="19" y1="14" x2="22" y2="14"/><path d="M10 10l-2 3h3l-2 3" fill="#000" stroke="none"/>'},
+    {n:"Батарея низкая", s:'<rect x="3" y="8" width="16" height="9" rx="1"/><line x1="19" y1="11" x2="22" y2="11"/><line x1="19" y1="14" x2="22" y2="14"/><rect x="5" y="10" width="3" height="5" fill="#000" stroke="none"/>'},
+    {n:"Зарядка", s:'<rect x="6" y="3" width="12" height="18" rx="2"/><path d="M12 8l-2 4h3l-2 4" fill="#000" stroke="none"/>'},
+    {n:"Лампа вкл", s:'<circle cx="12" cy="10" r="5"/><line x1="9" y1="17" x2="15" y2="17"/><line x1="10" y1="20" x2="14" y2="20"/><line x1="12" y1="2" x2="12" y2="3"/><line x1="5" y1="5" x2="6" y2="6"/><line x1="19" y1="5" x2="18" y2="6"/>'},
+    {n:"Патч-провод", s:'<path d="M6 3v6a3 3 0 0 0 3 3h6a3 3 0 0 1 3 3v6"/><circle cx="6" cy="3" r="1.5"/><circle cx="18" cy="21" r="1.5"/>'},
+    {n:"Электрощит", s:'<rect x="4" y="4" width="16" height="16" rx="1"/><circle cx="12" cy="10" r="3"/><line x1="12" y1="10" x2="13.5" y2="8.5"/><line x1="8" y1="16" x2="16" y2="16"/>'},
+    {n:"Трансформатор", s:'<circle cx="8" cy="12" r="4"/><circle cx="16" cy="12" r="4"/>'},
+    {n:"Предохранитель", s:'<rect x="3" y="9" width="18" height="6" rx="3"/><line x1="7" y1="12" x2="17" y2="12"/>'},
+    {n:"Датчик", s:'<circle cx="12" cy="12" r="3"/><path d="M7 7a7 7 0 0 0 0 10M17 7a7 7 0 0 1 0 10"/>'},
+    {n:"Тумблер", s:'<rect x="3" y="6" width="18" height="12" rx="6"/><circle cx="15" cy="12" r="4" fill="#000" stroke="none"/>'},
+    {n:"Выключатель", s:'<rect x="7" y="3" width="10" height="18" rx="1"/><rect x="10" y="7" width="4" height="6" rx="1" fill="#000" stroke="none"/>'},
+    {n:"Генератор", s:'<circle cx="12" cy="12" r="9"/><path d="M9 9v6l6-6v6"/>'}
   ],
   "Эмодзи": [
     {n:"Улыбка", s:'<circle cx="12" cy="12" r="9"/><circle cx="9" cy="10" r="0.9" fill="#000" stroke="none"/><circle cx="15" cy="10" r="0.9" fill="#000" stroke="none"/><path d="M8 14a5 5 0 0 0 8 0"/>'},
@@ -678,7 +738,19 @@ const ICONS = {
     {n:"Замок", s:'<rect x="5" y="11" width="14" height="9" rx="1"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/>'},
     {n:"Флаг", s:'<line x1="6" y1="3" x2="6" y2="21"/><path d="M6 4h11l-2 4 2 4H6"/>'},
     {n:"Палец вверх", s:'<path d="M7 11v9H4v-9z"/><path d="M7 11l4-8a2 2 0 0 1 3 2l-1 5h5a2 2 0 0 1 2 2l-2 6a2 2 0 0 1-2 1H7"/>'},
-    {n:"Вопрос", s:'<circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 1 1 3.5 2.3c-.9.4-1 .9-1 1.7"/><circle cx="12" cy="16.5" r="0.7" fill="#000" stroke="none"/>'}
+    {n:"Вопрос", s:'<circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 1 1 3.5 2.3c-.9.4-1 .9-1 1.7"/><circle cx="12" cy="16.5" r="0.7" fill="#000" stroke="none"/>'},
+    {n:"Грусть", s:'<circle cx="12" cy="12" r="9"/><circle cx="9" cy="10" r="0.9" fill="#000" stroke="none"/><circle cx="15" cy="10" r="0.9" fill="#000" stroke="none"/><path d="M8 16a5 5 0 0 1 8 0"/>'},
+    {n:"Огонь", s:'<path d="M12 3s5 4 5 9a5 5 0 0 1-10 0c0-2 1-3 2-4 0 1 1 2 2 2-1-3 1-5 1-7z"/>'},
+    {n:"Молния", s:'<path d="M13 2L4 14h6l-1 8 9-12h-6z" fill="#000" stroke="none"/>'},
+    {n:"Замок открыт", s:'<rect x="5" y="11" width="14" height="9" rx="1"/><path d="M8 11V8a4 4 0 0 1 7.5-2"/>'},
+    {n:"Глаз", s:'<path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="2.5"/>'},
+    {n:"Домик", s:'<path d="M4 11l8-6 8 6v9H4z"/>'},
+    {n:"Ключ гаечный", s:'<path d="M14 6a4 4 0 0 0-5 5l-6 6 3 3 6-6a4 4 0 0 0 5-5l-2 2-2-.5-.5-2z"/>'},
+    {n:"Термометр", s:'<path d="M12 3a2.5 2.5 0 0 0-2.5 2.5v9a4 4 0 1 0 5 0v-9A2.5 2.5 0 0 0 12 3z"/><circle cx="12" cy="17" r="1.5" fill="#000" stroke="none"/>'},
+    {n:"Часы", s:'<circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 15"/>'},
+    {n:"Локация", s:'<path d="M12 21s7-6 7-11a7 7 0 0 0-14 0c0 5 7 11 7 11z"/><circle cx="12" cy="10" r="2.5"/>'},
+    {n:"Плюс", s:'<line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>'},
+    {n:"Минус", s:'<line x1="5" y1="12" x2="19" y2="12"/>'}
   ]
 };
 const ICON_WRAP = inner => `<svg viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg">${inner}</svg>`;
