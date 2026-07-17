@@ -80,11 +80,19 @@
   #batchGallery { position:absolute; inset:0; overflow:auto; padding:14px 16px; background:var(--bg); }
   #batchGallery.hidden { display:none; }
   .tapeHdr { position:sticky; top:-14px; color:var(--mut); font-size:12px; text-transform:uppercase; letter-spacing:.5px; padding:4px 0 10px; background:var(--bg); z-index:1; }
-  .tapeStrip { display:flex; flex-wrap:wrap; align-items:flex-start; }        /* labels flow left-to-right, wrap like text */
-  .tapeStrip .tcell { background:#fff; border-right:2px dashed #9aa; }         /* dashed = cut line between labels */
-  .tapeStrip .tcell:last-child { border-right:none; }
+  .tapeStrip { display:flex; flex-wrap:wrap; align-items:flex-start; row-gap:8px; }  /* labels flow left-to-right, wrap like text */
+  .tapeStrip .tcell { display:flex; flex-direction:column; }
+  .tapeStrip .tcm { color:var(--mut); font-size:11px; padding:0 2px 3px; white-space:nowrap; }  /* #N + params above each label */
+  .tapeStrip .timg { background:#fff; border-right:2px dashed #9aa; }          /* dashed = cut line between labels */
+  .tapeStrip .tcell:last-child .timg { border-right:none; }
   .tapeStrip img { height:72px; width:auto; image-rendering:pixelated; display:block; }
   .tapeStrip .tcell.printed { opacity:.4; }
+  /* subtle scrollbars so they don't stand out on the dark UI */
+  ::-webkit-scrollbar { width:10px; height:10px; }
+  ::-webkit-scrollbar-track { background:transparent; }
+  ::-webkit-scrollbar-thumb { background:var(--line); border-radius:6px; border:2px solid var(--bg); }
+  ::-webkit-scrollbar-thumb:hover { background:#3a4150; }
+  * { scrollbar-width:thin; scrollbar-color:var(--line) transparent; }
   #paneResizer { height:7px; cursor:row-resize; background:var(--line); flex:0 0 auto; }
   #paneResizer:hover { background:var(--acc); }
   #paneResizer.hidden { display:none; }
@@ -531,13 +539,14 @@ async function refreshBatch(quiet){
     r = await fetch("/api/render_batch",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({template:buildSpec(), rows})});
   }
   const j = await r.json();
-  const totalMm = j.items.reduce((a,it)=> a + it.mm + 18, 0);   // +18mm per label for the 9mm end margins
   const strip = j.items.map((it,k)=>{
     const gi = rows[k] ? rows[k].__i : it.index;
-    return `<div class="tcell ${csvPrinted.has(gi)?'printed':''}" title="#${it.index+1} · ~${it.mm}мм · ${it.tape_mm}мм лента"><img src="${it.png}"></div>`;
+    return `<div class="tcell ${csvPrinted.has(gi)?'printed':''}">`+
+      `<div class="tcm">#${it.index+1} · ~${it.mm}мм · ${it.tape_mm}мм</div>`+
+      `<div class="timg"><img src="${it.png}"></div></div>`;
   }).join("");
   $("#batchGallery").innerHTML =
-    `<div class="tapeHdr">Партия: ${j.count} наклеек · ~${Math.round(totalMm)} мм ленты (с полями 9мм)</div>`+
+    `<div class="tapeHdr">Партия: ${j.count} наклеек</div>`+
     `<div class="tapeStrip">${strip}</div>`;
   showGallery(true);
   $("#batchBtn").classList.remove("hidden");
