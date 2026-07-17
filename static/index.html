@@ -47,6 +47,13 @@
   .chips { display:flex; gap:6px; flex-wrap:wrap; }
   .chip { padding:6px 12px; border-radius:8px; background:var(--panel2); border:1px solid var(--line); cursor:pointer; font-size:13px; }
   .chip.sel { background:var(--acc2); border-color:var(--acc); color:#fff; }
+  .tplRow { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:10px; }
+  .tplbtn { width:44px; height:44px; border:1px solid var(--line); border-radius:8px; background:var(--panel2);
+    cursor:pointer; display:flex; flex-direction:column; justify-content:center; align-items:center; gap:3px; padding:7px 6px; }
+  .tplbtn:hover { border-color:var(--acc); }
+  .tplbtn .bar { background:var(--fg); border-radius:1px; width:74%; height:3px; opacity:.85; }
+  .tplbtn .bar.big { height:8px; width:82%; }
+  .tplbtn .bar.sm { height:2px; width:60%; opacity:.55; }
   .line { border:1px solid var(--line); border-radius:8px; padding:8px; margin-bottom:8px; background:var(--panel2); }
   .line .hd { display:flex; align-items:center; gap:8px; margin-bottom:6px; }
   .line .hd b { font-size:12px; color:var(--mut); flex:1; }
@@ -120,6 +127,7 @@
   <section class="editor">
     <fieldset id="textFs">
       <legend>Строки (1-8)</legend>
+      <div class="tplRow" id="lineTpls"></div>
       <div id="lines"></div>
       <button class="ghost" id="addLine">+ строка</button>
       <label class="f" style="margin-top:10px">Межстрочное расстояние: <span id="lsVal">0.00</span></label>
@@ -232,6 +240,7 @@ async function loadMeta(){
     cable_flag:"Флажок кабеля", cable_wrap:"Обёртка кабеля", patch_panel:"Патч-панель"};
   $("#typeChips").innerHTML = META.label_types.map(t=>`<span class="chip ${t===TYPE?'sel':''}" data-t="${t}">${labels[t]||t}</span>`).join("");
   $("#typeChips").querySelectorAll(".chip").forEach(c=>c.onclick=()=>{ TYPE=c.dataset.t; $("#typeChips").querySelectorAll(".chip").forEach(x=>x.classList.toggle("sel", x===c)); applyTypeUI(); scheduleRender(); });
+  renderLineTemplates();
   addLine("LW-700");
   applyTypeUI();
 }
@@ -246,6 +255,34 @@ function applyTypeUI(){
 }
 
 function fontOptions(sel){ return META.fonts.map(f=>`<option ${f===sel?'selected':''}>${f}</option>`).join(""); }
+
+// line-layout quick templates (icons drawn as stacked bars); click loads, user tweaks after
+const LINE_TEMPLATES = [
+  {t:"1 строка",                          bars:["bar"],                lines:[{}]},
+  {t:"2 строки",                          bars:["bar","bar"],          lines:[{},{}]},
+  {t:"3 строки",                          bars:["bar","bar","bar"],    lines:[{},{},{}]},
+  {t:"4 строки",                          bars:["bar","bar","bar","bar"], lines:[{},{},{},{}]},
+  {t:"Заголовок (крупный жирный) + подпись", bars:["big","sm"],        lines:[{size:20,bold:true},{size:11}]},
+  {t:"Заголовок + 2 подписи",             bars:["big","sm","sm"],      lines:[{size:14,bold:true},{size:9},{size:9}]},
+];
+function renderLineTemplates(){
+  $("#lineTpls").innerHTML = LINE_TEMPLATES.map((tpl,i)=>
+    `<div class="tplbtn" data-i="${i}" title="${tpl.t}">`+
+      tpl.bars.map(b=>`<span class="bar ${b==="bar"?"":b}"></span>`).join("")+
+    `</div>`).join("");
+  $("#lineTpls").querySelectorAll(".tplbtn").forEach(b=>b.onclick=()=>applyLineTemplate(LINE_TEMPLATES[+b.dataset.i]));
+}
+function applyLineTemplate(tpl){
+  const cont=$("#lines"); cont.innerHTML="";
+  tpl.lines.forEach(()=>addLine(""));
+  [...cont.querySelectorAll(".line")].forEach((d,i)=>{
+    const l=tpl.lines[i]||{};
+    d.querySelector(".sz").value=l.size||0;
+    d.querySelector(".bd").checked=!!l.bold;
+    d.querySelector(".al").value=l.align||"center";
+  });
+  scheduleRender();
+}
 
 function addLine(text=""){
   const lines = $("#lines");
