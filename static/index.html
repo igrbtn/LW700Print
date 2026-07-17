@@ -14,8 +14,15 @@
   header { display:flex; align-items:center; gap:14px; padding:10px 16px; background:var(--panel); border-bottom:1px solid var(--line); z-index:5; }
   header h1 { font-size:15px; margin:0; font-weight:650; letter-spacing:.2px; }
   header .sp { flex:1; }
-  #typeRibbon { display:flex; align-items:center; gap:12px; padding:8px 16px; background:var(--panel); border-bottom:1px solid var(--line); }
+  #typeRibbon { display:flex; align-items:center; gap:12px; padding:8px 16px; background:var(--panel); border-bottom:1px solid var(--line); flex-wrap:wrap; row-gap:8px; }
   #typeRibbon .rlabel { color:var(--mut); font-size:12px; text-transform:uppercase; letter-spacing:.5px; white-space:nowrap; }
+  #typeRibbon .ribGroup { display:flex; align-items:center; gap:8px; }
+  #typeRibbon select.rib, #typeRibbon input.rib { width:auto; padding:5px 8px; }
+  #typeRibbon input.num { width:62px; }
+  #typeRibbon select#tape { max-width:160px; }
+  #typeRibbon button.rib { padding:5px 10px; }
+  #typeRibbon .toggle { white-space:nowrap; }
+  #typeRibbon .ribDiv { width:1px; align-self:stretch; background:var(--line); margin:0 2px; }
   .badge { font-size:12px; padding:4px 10px; border-radius:20px; background:var(--panel2); color:var(--mut); border:1px solid var(--line); }
   .badge.on { color:var(--ok); border-color:#1f5f3a; }
   .badge.off { color:var(--warn); border-color:#5f4a1f; }
@@ -93,37 +100,25 @@
   <button class="primary" id="printBtn">Печать</button>
 </header>
 <div id="typeRibbon">
+  <div class="ribGroup">
+    <span class="rlabel">Лента</span>
+    <select id="tape" class="rib" title="Ширина ленты"></select>
+    <button class="ghost rib" id="autoTape" title="Определить по принтеру">Авто</button>
+    <select id="lenMode" class="rib" title="Режим длины">
+      <option value="auto">Авто длина</option>
+      <option value="fixed">Фикс. мм</option>
+    </select>
+    <input type="number" id="lenMm" class="rib num" value="40" min="5" max="500" step="1" title="Длина, мм">
+    <span class="rlabel">Поля</span>
+    <input type="number" id="margin" class="rib num" value="0" min="0" max="30" step="0.5" title="Поля, мм">
+    <label class="toggle" title="Белым по чёрному"><input type="checkbox" id="invert"> Инверсия</label>
+  </div>
+  <span class="ribDiv"></span>
   <span class="rlabel">Тип наклейки</span>
   <div class="chips" id="typeChips"></div>
 </div>
 <main>
   <section class="editor">
-    <fieldset>
-      <legend>Лента</legend>
-      <label class="f">Ширина ленты</label>
-      <div class="row">
-        <select id="tape"></select>
-        <button class="ghost" id="autoTape" title="Определить по принтеру">Авто</button>
-      </div>
-      <div class="row" style="margin-top:8px">
-        <div>
-          <label class="f">Длина</label>
-          <select id="lenMode">
-            <option value="auto">Авто (по содержимому)</option>
-            <option value="fixed">Фиксированная, мм</option>
-          </select>
-        </div>
-        <div>
-          <label class="f">Длина, мм</label>
-          <input type="number" id="lenMm" value="40" min="5" max="500" step="1">
-        </div>
-      </div>
-      <div class="row" style="margin-top:8px">
-        <div><label class="f">Поля, мм</label><input type="number" id="margin" value="0" min="0" max="30" step="0.5"></div>
-        <div><label class="f">&nbsp;</label><label class="toggle"><input type="checkbox" id="invert"> Инверсия (белым по чёрному)</label></div>
-      </div>
-    </fieldset>
-
     <fieldset id="textFs">
       <legend>Строки (1-8)</legend>
       <div id="lines"></div>
