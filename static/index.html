@@ -93,6 +93,8 @@
   ::-webkit-scrollbar-thumb { background:var(--line); border-radius:6px; border:2px solid var(--bg); }
   ::-webkit-scrollbar-thumb:hover { background:#3a4150; }
   * { scrollbar-width:thin; scrollbar-color:var(--line) transparent; }
+  #credit { position:fixed; right:11px; bottom:7px; font-size:11px; color:var(--mut); text-decoration:none; opacity:.55; z-index:4; }
+  #credit:hover { color:var(--acc); opacity:1; }
   #paneResizer { height:7px; cursor:row-resize; background:var(--line); flex:0 0 auto; }
   #paneResizer:hover { background:var(--acc); }
   #paneResizer.hidden { display:none; }
@@ -268,6 +270,7 @@
   </section>
 </main>
 <div id="toast"></div>
+<a id="credit" href="https://batin.uz" target="_blank" rel="noopener">by Igor Batin</a>
 
 <div id="iconModal">
   <div class="imodal">
