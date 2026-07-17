@@ -28,8 +28,8 @@
   .badge.on { color:var(--ok); border-color:#1f5f3a; }
   .badge.off { color:var(--warn); border-color:#5f4a1f; }
   main { display:grid; grid-template-columns:minmax(360px,440px) 1fr; gap:0; flex:1; min-height:0; }
-  .editor { overflow-y:auto; padding:14px 16px; border-right:1px solid var(--line); }
-  .stage { display:flex; flex-direction:column; }
+  .editor { overflow:hidden auto; padding:14px 16px; border-right:1px solid var(--line); min-width:0; }
+  .stage { display:flex; flex-direction:column; min-width:0; }
   .stageTop { padding:14px 16px; border-bottom:1px solid var(--line); display:flex; align-items:center; gap:12px; }
   .preview { flex:2; position:relative; display:flex; align-items:center; justify-content:center; overflow:auto; padding:24px; background:
     repeating-conic-gradient(#14161c 0% 25%, #10121722 0% 50%) 50% / 22px 22px; }
@@ -48,9 +48,9 @@
   .chips { display:flex; gap:6px; flex-wrap:wrap; }
   .chip { padding:6px 12px; border-radius:8px; background:var(--panel2); border:1px solid var(--line); cursor:pointer; font-size:13px; }
   .chip.sel { background:var(--acc2); border-color:var(--acc); color:#fff; }
-  .tplRow { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:10px; }
-  .tplbtn { width:44px; height:44px; border:1px solid var(--line); border-radius:8px; background:var(--panel2);
-    cursor:pointer; display:flex; flex-direction:column; justify-content:center; align-items:center; gap:3px; padding:7px 6px; }
+  .tplRow { display:flex; gap:5px; margin-bottom:10px; }
+  .tplbtn { flex:1; min-width:0; height:42px; border:1px solid var(--line); border-radius:8px; background:var(--panel2);
+    cursor:pointer; display:flex; flex-direction:column; justify-content:center; align-items:center; gap:3px; padding:7px 5px; }
   .tplbtn:hover { border-color:var(--acc); }
   .tplbtn .bar { background:var(--fg); border-radius:1px; width:74%; height:3px; opacity:.85; }
   .tplbtn .bar.big { height:8px; width:82%; }
@@ -65,8 +65,9 @@
   .toggle { display:inline-flex; align-items:center; gap:6px; font-size:12px; color:var(--mut); cursor:pointer; }
   button.primary { background:var(--acc2); border:1px solid var(--acc); border-radius:9px; padding:10px 18px; color:#fff; cursor:pointer; font-weight:600; }
   button.primary:hover { background:var(--acc); }
-  button.ghost { background:var(--panel2); border:1px solid var(--line); border-radius:8px; padding:8px 12px; cursor:pointer; color:var(--fg); }
-  button.ghost:hover { border-color:var(--acc); }
+  .ghost { background:var(--panel2); border:1px solid var(--line); border-radius:8px; padding:8px 12px; cursor:pointer; color:var(--fg); }
+  .ghost:hover { border-color:var(--acc); }
+  label.fbtn { display:inline-block; text-align:center; }
   .dims { color:var(--mut); font-size:12px; }
   .hint { color:var(--mut); font-size:12px; margin-top:6px; }
   .note { font-size:12px; color:var(--warn); margin-top:8px; }
@@ -76,14 +77,17 @@
   table.csv { width:100%; border-collapse:collapse; font-size:12px; margin-top:8px; }
   table.csv th,table.csv td { border:1px solid var(--line); padding:4px 6px; text-align:left; white-space:nowrap; }
   .hidden { display:none; }
-  #batchGallery { position:absolute; inset:0; overflow:auto; padding:14px 16px; display:flex; flex-direction:column; gap:10px; background:var(--bg); }
+  #batchGallery { position:absolute; inset:0; overflow:auto; padding:14px 16px; background:var(--bg); }
   #batchGallery.hidden { display:none; }
-  #batchGallery::before { content:"Предпросмотр партии"; position:sticky; top:-14px; color:var(--mut); font-size:12px; text-transform:uppercase; letter-spacing:.5px; padding:2px 0; background:var(--bg); z-index:1; }
-  .gcard { background:var(--panel); border:1px solid var(--line); border-radius:8px; padding:8px 10px; }
-  .gcard .gm { color:var(--mut); font-size:12px; margin-bottom:6px; display:flex; gap:10px; align-items:center; }
-  .gcard .gimg { overflow-x:auto; background:#fff; border-radius:4px; padding:4px; }
-  .gcard img { height:64px; width:auto; image-rendering:pixelated; display:block; }
-  .gcard.printed { opacity:.5; } .gcard.printed .gm::after { content:"✓ напечатано"; color:var(--ok); }
+  .tapeHdr { position:sticky; top:-14px; color:var(--mut); font-size:12px; text-transform:uppercase; letter-spacing:.5px; padding:4px 0 10px; background:var(--bg); z-index:1; }
+  .tapeStrip { display:flex; flex-wrap:wrap; align-items:flex-start; }        /* labels flow left-to-right, wrap like text */
+  .tapeStrip .tcell { background:#fff; border-right:2px dashed #9aa; }         /* dashed = cut line between labels */
+  .tapeStrip .tcell:last-child { border-right:none; }
+  .tapeStrip img { height:72px; width:auto; image-rendering:pixelated; display:block; }
+  .tapeStrip .tcell.printed { opacity:.4; }
+  #paneResizer { height:7px; cursor:row-resize; background:var(--line); flex:0 0 auto; }
+  #paneResizer:hover { background:var(--acc); }
+  #paneResizer.hidden { display:none; }
   #galleryBar { display:none; padding:10px 16px; border-bottom:1px solid var(--line); align-items:center; gap:12px; }
   #galleryBar.show { display:flex; }
   #csvTableWrap table { width:100%; border-collapse:collapse; font-size:12px; }
@@ -199,10 +203,12 @@
 
     <fieldset>
       <legend>Импорт из CSV (пакетная печать)</legend>
-      <div class="row" style="align-items:center">
-        <input type="file" id="csvFile" accept=".csv" style="flex:2">
+      <div class="row" style="align-items:center; gap:8px">
+        <label class="ghost fbtn" for="csvFile" style="flex:0 0 auto">Выберите файл</label>
         <button class="ghost hidden" id="closeCsvBtn" style="flex:0 0 auto">Закрыть файл</button>
+        <input type="file" id="csvFile" accept=".csv" style="display:none">
       </div>
+      <div id="csvFname" class="csvbox" style="margin-top:6px">файл не выбран</div>
       <div id="csvInfo" class="csvbox"></div>
       <label class="toggle hidden" id="groupWrap" style="margin-top:8px"><input type="checkbox" id="groupMode"> Мультилайн: собрать строки по колонке <b>group</b> (формат с line/bold/align/font/size_pt)</label>
       <div class="row" style="margin-top:8px">
@@ -230,6 +236,7 @@
       <img id="preview" alt="preview">
       <div id="batchGallery" class="hidden"></div>
     </div>
+    <div id="paneResizer" class="hidden" title="Перетащи, чтобы изменить высоту таблицы"></div>
     <div id="tablePane" class="hidden">
       <input type="text" id="csvSearch" placeholder="Поиск / фильтр по всем колонкам...">
       <div id="csvTableWrap"></div>
@@ -258,7 +265,8 @@ async function loadMeta(){
   $("#barcodeType").innerHTML = META.barcode_types.map(b=>`<option>${b}</option>`).join("");
   const labels = {text:"Текст", qr:"QR", barcode:"Штрихкод", text_qr:"Текст + QR",
     image:"Изображение", image_text:"Изображение + текст",
-    cable_flag:"Флажок кабеля", cable_wrap:"Обёртка кабеля", patch_panel:"Патч-панель"};
+    cable_flag:"Флажок кабеля", image_flag:"Изображение + флажок", qr_flag:"QR + флажок",
+    cable_wrap:"Обёртка кабеля", patch_panel:"Патч-панель"};
   const others = META.label_types.filter(t=>!PRIMARY_TYPES.includes(t));
   $("#typeChips").innerHTML = PRIMARY_TYPES.map(t=>`<span class="chip" data-t="${t}">${labels[t]||t}</span>`).join("");
   $("#typeMore").innerHTML = `<option value="">Ещё типы…</option>` + others.map(t=>`<option value="${t}">${labels[t]||t}</option>`).join("");
@@ -280,14 +288,14 @@ function syncTypeUI(){
 }
 function applyTypeUI(){
   const showText  = ["text","text_qr","image_text","cable_flag","cable_wrap","patch_panel"].includes(TYPE);
-  const showCode  = ["qr","barcode","text_qr"].includes(TYPE);
-  const showImage = ["image","image_text"].includes(TYPE);
+  const showCode  = ["qr","barcode","text_qr","qr_flag"].includes(TYPE);
+  const showImage = ["image","image_text","image_flag"].includes(TYPE);
   const showSide  = ["text_qr","image_text"].includes(TYPE);
   $("#textFs").classList.toggle("hidden", !showText);
   $("#codeFs").classList.toggle("hidden", !showCode);
   $("#imageFs").classList.toggle("hidden", !showImage);
   $("#sideFs").classList.toggle("hidden", !showSide);
-  $("#flagFs").classList.toggle("hidden", !["cable_flag","cable_wrap"].includes(TYPE));
+  $("#flagFs").classList.toggle("hidden", !["cable_flag","cable_wrap","image_flag","qr_flag"].includes(TYPE));
   $("#panelFs").classList.toggle("hidden", TYPE!=="patch_panel");
 }
 
@@ -302,7 +310,6 @@ const LINE_TEMPLATES = [
   {t:"Заголовок (крупный жирный) + подпись", bars:["big","sm"],        lines:[{size:20,bold:true},{size:11}]},
   {t:"Заголовок + 2 подписи",             bars:["big","sm","sm"],      lines:[{size:14,bold:true},{size:9},{size:9}]},
   {t:"Заголовок + 3 подписи",             bars:["big","sm","sm","sm"], lines:[{size:13,bold:true},{size:9},{size:9},{size:9}]},
-  {t:"Мелкая подпись + крупный заголовок", bars:["sm","big"],          lines:[{size:10},{size:20,bold:true}]},
 ];
 function renderLineTemplates(){
   $("#lineTpls").innerHTML = LINE_TEMPLATES.map((tpl,i)=>
@@ -413,12 +420,13 @@ let csvSort = {col:null, dir:1};
 let csvSel = new Set();
 $("#csvFile").onchange = async e=>{
   const f=e.target.files[0]; if(!f) return;
+  $("#csvFname").textContent = f.name;
   const fd=new FormData(); fd.append("file", f);
   const j = await (await fetch("/api/csv",{method:"POST",body:fd})).json();
   j.rows.forEach((r,i)=>r.__i=i);
   CSV = j; csvSel = new Set(); csvSort={col:null,dir:1};
   $("#csvInfo").textContent = `${j.count} строк · колонки: ${j.columns.join(", ")}`;
-  $("#tablePane").classList.remove("hidden"); $("#csvSearch").value="";
+  $("#tablePane").classList.remove("hidden"); $("#paneResizer").classList.remove("hidden"); $("#csvSearch").value="";
   $("#groupWrap").classList.toggle("hidden", !CSV.columns.includes("group"));
   $("#previewAllBtn").classList.remove("hidden");
   $("#closeCsvBtn").classList.remove("hidden");
@@ -429,8 +437,8 @@ $("#csvFile").onchange = async e=>{
 $("#closeCsvBtn").onclick = ()=>{
   CSV=null; csvSel=new Set(); csvPrinted=new Set(); lastPreviewRows=[];
   $("#printBtn").textContent="Печать";
-  $("#csvFile").value=""; $("#csvInfo").textContent="";
-  $("#tablePane").classList.add("hidden");
+  $("#csvFile").value=""; $("#csvInfo").textContent=""; $("#csvFname").textContent="файл не выбран";
+  $("#tablePane").classList.add("hidden"); $("#paneResizer").classList.add("hidden");
   ["previewAllBtn","batchBtn","closeCsvBtn","groupWrap"].forEach(id=>$("#"+id).classList.add("hidden"));
   showGallery(false);
   doRender();
@@ -523,10 +531,14 @@ async function refreshBatch(quiet){
     r = await fetch("/api/render_batch",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({template:buildSpec(), rows})});
   }
   const j = await r.json();
-  $("#batchGallery").innerHTML = j.items.map((it,k)=>{
+  const totalMm = j.items.reduce((a,it)=> a + it.mm + 18, 0);   // +18mm per label for the 9mm end margins
+  const strip = j.items.map((it,k)=>{
     const gi = rows[k] ? rows[k].__i : it.index;
-    return `<div class="gcard ${csvPrinted.has(gi)?'printed':''}"><div class="gm">#${it.index+1} · ~${it.mm}мм · ${it.tape_mm}мм лента</div><div class="gimg"><img src="${it.png}"></div></div>`;
+    return `<div class="tcell ${csvPrinted.has(gi)?'printed':''}" title="#${it.index+1} · ~${it.mm}мм · ${it.tape_mm}мм лента"><img src="${it.png}"></div>`;
   }).join("");
+  $("#batchGallery").innerHTML =
+    `<div class="tapeHdr">Партия: ${j.count} наклеек · ~${Math.round(totalMm)} мм ленты (с полями 9мм)</div>`+
+    `<div class="tapeStrip">${strip}</div>`;
   showGallery(true);
   $("#batchBtn").classList.remove("hidden");
   if(!quiet) toast(`Предпросмотр: ${j.count}. Проверь и жми «Печать».`);
@@ -546,10 +558,23 @@ async function printBatch(){
   j = await r.json();
   rows.forEach(r=>csvPrinted.add(r.__i));   // mark printed
   renderCsvTable();
-  $("#batchGallery").querySelectorAll(".gcard").forEach((c,k)=>{ if(lastPreviewRows[k] && csvPrinted.has(lastPreviewRows[k].__i)) c.classList.add("printed"); });
+  $("#batchGallery").querySelectorAll(".tcell").forEach((c,k)=>{ if(lastPreviewRows[k] && csvPrinted.has(lastPreviewRows[k].__i)) c.classList.add("printed"); });
   toast(`Пакет: ${j.count} наклеек отправлено`);
 }
 $("#batchBtn").onclick = printBatch;
+
+// draggable divider: resize the CSV table pane by dragging its top border
+(function(){
+  const rz=$("#paneResizer"), pane=$("#tablePane"); let drag=false;
+  rz.addEventListener("mousedown", e=>{ drag=true; e.preventDefault(); document.body.style.userSelect="none"; });
+  window.addEventListener("mousemove", e=>{
+    if(!drag) return;
+    const stage=pane.parentElement.getBoundingClientRect();
+    const h=Math.max(80, Math.min(stage.bottom - e.clientY, stage.height - 160));
+    pane.style.flex="0 0 "+h+"px";
+  });
+  window.addEventListener("mouseup", ()=>{ if(drag){ drag=false; document.body.style.userSelect=""; } });
+})();
 
 // --- CSV template export for agent/LLM ---
 function download(name, text, mime){

@@ -22,7 +22,7 @@ import math
 
 Align = Literal["left", "center", "right"]
 LabelType = Literal["text", "qr", "barcode", "text_qr", "image", "image_text",
-                    "cable_flag", "cable_wrap", "patch_panel"]
+                    "cable_flag", "image_flag", "qr_flag", "cable_wrap", "patch_panel"]
 
 MAX_LENGTH_MM = 500  # safety cap
 LINE_PAD_FRAC = 0.15  # vertical padding inside each text band
@@ -266,6 +266,10 @@ def render(spec: LabelSpec) -> Image.Image:
 
     elif spec.label_type == "cable_flag":
         img = _cable_flag(spec, height, margin)
+    elif spec.label_type == "image_flag":
+        img = _flag_from_face(_decode_logo(spec.image_b64, height), spec, height)
+    elif spec.label_type == "qr_flag":
+        img = _flag_from_face(_qr_img(spec.code_data or " ", height), spec, height)
     elif spec.label_type == "cable_wrap":
         img = _cable_wrap(spec, height, margin)
     elif spec.label_type == "patch_panel":
@@ -285,23 +289,27 @@ def _wrap_dots(spec: "LabelSpec") -> int:
     return mm_to_dots(mm)
 
 
-def _cable_flag(spec: "LabelSpec", height: int, margin: int) -> Image.Image:
-    """Cable flag: text near BOTH ends, blank middle wraps the cable; when the two
-    ends fold together they form a two-sided flag. The 2nd face is rotated 180 deg
-    (flag_mirror) so both faces read upright once folded."""
-    text = _text_block(spec.lines, height, margin, None, spec.line_spacing / 2)
+def _flag_from_face(face: Image.Image, spec: "LabelSpec", height: int) -> Image.Image:
+    """Build a two-sided cable flag from one face image: face near BOTH ends, blank
+    middle (obhvat) wraps the cable. The 2nd face is rotated 180 (flag_mirror) so both
+    read upright once folded. A dashed stripe marks the fold centre (cable axis)."""
     wrap = _wrap_dots(spec)
-    total = text.width * 2 + wrap
+    total = face.width * 2 + wrap
     img = Image.new("1", (total, height), 1)
-    img.paste(text, (0, 0))                                  # left flag (near left end)
-    right = text.rotate(180) if spec.flag_mirror else text
+    img.paste(face, (0, 0))                                  # left flag (near left end)
+    right = face.rotate(180) if spec.flag_mirror else face
     img.paste(right, (total - right.width, 0))               # right flag (near right end)
-    # centering stripe: dashed vertical line at the fold centre (cable axis)
     draw = ImageDraw.Draw(img)
     cx = total // 2
     for y in range(0, height, 6):
         draw.line([(cx, y), (cx, min(y + 3, height - 1))], fill=0, width=2)
     return img
+
+
+def _cable_flag(spec: "LabelSpec", height: int, margin: int) -> Image.Image:
+    """Cable flag with a text face at both ends."""
+    face = _text_block(spec.lines, height, margin, None, spec.line_spacing / 2)
+    return _flag_from_face(face, spec, height)
 
 
 def _cable_wrap(spec: "LabelSpec", height: int, margin: int) -> Image.Image:

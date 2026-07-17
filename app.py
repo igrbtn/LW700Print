@@ -48,7 +48,7 @@ def meta():
         "min_lines": MIN_LINES,
         "max_lines": MAX_LINES,
         "label_types": ["text", "qr", "barcode", "text_qr", "image", "image_text",
-                        "cable_flag", "cable_wrap", "patch_panel"],
+                        "cable_flag", "image_flag", "qr_flag", "cable_wrap", "patch_panel"],
         "barcode_types": ["code128", "code39", "ean13", "ean8", "upca", "isbn13"],
         "aligns": ["left", "center", "right"],
     }
