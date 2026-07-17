@@ -21,6 +21,7 @@
   #typeRibbon input.num { width:62px; }
   #typeRibbon select#tape { max-width:160px; }
   #typeRibbon button.rib { padding:5px 10px; }
+  #typeRibbon select#typeMore.sel-more { background:var(--acc2); border-color:var(--acc); color:#fff; }
   #typeRibbon .toggle { white-space:nowrap; }
   #typeRibbon .ribDiv { width:1px; align-self:stretch; background:var(--line); margin:0 2px; }
   .badge { font-size:12px; padding:4px 10px; border-radius:20px; background:var(--panel2); color:var(--mut); border:1px solid var(--line); }
@@ -122,6 +123,7 @@
   <span class="ribDiv"></span>
   <span class="rlabel">Тип наклейки</span>
   <div class="chips" id="typeChips"></div>
+  <select id="typeMore" class="rib" title="Другие типы наклеек"></select>
 </div>
 <main>
   <section class="editor">
@@ -142,7 +144,25 @@
         <div><label class="f">Тип штрихкода</label><select id="barcodeType"></select></div>
         <div><label class="f">&nbsp;</label><label class="toggle"><input type="checkbox" id="showCodeText" checked> Подпись под кодом</label></div>
       </div>
-      <div class="hint">Для QR подпись берётся из первой строки (тип «текст+QR» или «QR»).</div>
+      <div class="hint">«QR» - только код. Подпись рядом - тип «Текст + QR» (сторона ниже). «Подпись под кодом» - для штрихкода.</div>
+    </fieldset>
+
+    <fieldset id="imageFs" class="hidden">
+      <legend>Изображение / логотип</legend>
+      <div class="row" style="align-items:center">
+        <input type="file" id="logoFile" accept="image/*" style="flex:2">
+        <button class="ghost hidden" id="clearLogo" style="flex:0 0 auto">Убрать</button>
+      </div>
+      <div class="hint">PNG/JPG. Масштабируется по высоте ленты, переводится в ч/б (дизеринг). Для «Изображение + текст» текст берётся из строк выше.</div>
+    </fieldset>
+
+    <fieldset id="sideFs" class="hidden">
+      <legend>Расположение</legend>
+      <label class="f">Код / изображение относительно текста</label>
+      <select id="codeSide">
+        <option value="left">Слева от текста</option>
+        <option value="right">Справа от текста</option>
+      </select>
     </fieldset>
 
     <fieldset id="flagFs" class="hidden">
@@ -222,7 +242,7 @@
 
 <script>
 const $ = s => document.querySelector(s);
-let META = null, TYPE = "text", detectedTape = null;
+let META = null, TYPE = "text", detectedTape = null, LOGO = "";  // LOGO: uploaded image data-URL
 // tape width: "auto" resolves to the printer-detected width (fallback 18mm)
 function tapeMm(){ const v=$("#tape").value; return v==="auto" ? (detectedTape||18) : +v; }
 // length: hide the mm input in auto mode, show it only for fixed length
@@ -237,19 +257,36 @@ async function loadMeta(){
   tape.value = "auto";
   $("#barcodeType").innerHTML = META.barcode_types.map(b=>`<option>${b}</option>`).join("");
   const labels = {text:"Текст", qr:"QR", barcode:"Штрихкод", text_qr:"Текст + QR",
+    image:"Изображение", image_text:"Изображение + текст",
     cable_flag:"Флажок кабеля", cable_wrap:"Обёртка кабеля", patch_panel:"Патч-панель"};
-  $("#typeChips").innerHTML = META.label_types.map(t=>`<span class="chip ${t===TYPE?'sel':''}" data-t="${t}">${labels[t]||t}</span>`).join("");
-  $("#typeChips").querySelectorAll(".chip").forEach(c=>c.onclick=()=>{ TYPE=c.dataset.t; $("#typeChips").querySelectorAll(".chip").forEach(x=>x.classList.toggle("sel", x===c)); applyTypeUI(); scheduleRender(); });
+  const others = META.label_types.filter(t=>!PRIMARY_TYPES.includes(t));
+  $("#typeChips").innerHTML = PRIMARY_TYPES.map(t=>`<span class="chip" data-t="${t}">${labels[t]||t}</span>`).join("");
+  $("#typeMore").innerHTML = `<option value="">Ещё типы…</option>` + others.map(t=>`<option value="${t}">${labels[t]||t}</option>`).join("");
+  $("#typeChips").querySelectorAll(".chip").forEach(c=>c.onclick=()=>setType(c.dataset.t));
+  $("#typeMore").onchange=()=>{ if($("#typeMore").value) setType($("#typeMore").value); };
+  syncTypeUI();
   renderLineTemplates();
   addLine("LW-700");
   applyTypeUI();
 }
 
+const PRIMARY_TYPES = ["text","cable_flag"];   // shown as chips; the rest live in the dropdown
+function setType(t){ TYPE=t; syncTypeUI(); applyTypeUI(); scheduleRender(); }
+function syncTypeUI(){
+  $("#typeChips").querySelectorAll(".chip").forEach(x=>x.classList.toggle("sel", x.dataset.t===TYPE));
+  const inMore = !PRIMARY_TYPES.includes(TYPE);
+  $("#typeMore").value = inMore ? TYPE : "";
+  $("#typeMore").classList.toggle("sel-more", inMore);
+}
 function applyTypeUI(){
-  const showText = ["text","qr","text_qr","cable_flag","cable_wrap","patch_panel"].includes(TYPE);
-  const showCode = ["qr","barcode","text_qr"].includes(TYPE);
+  const showText  = ["text","text_qr","image_text","cable_flag","cable_wrap","patch_panel"].includes(TYPE);
+  const showCode  = ["qr","barcode","text_qr"].includes(TYPE);
+  const showImage = ["image","image_text"].includes(TYPE);
+  const showSide  = ["text_qr","image_text"].includes(TYPE);
   $("#textFs").classList.toggle("hidden", !showText);
   $("#codeFs").classList.toggle("hidden", !showCode);
+  $("#imageFs").classList.toggle("hidden", !showImage);
+  $("#sideFs").classList.toggle("hidden", !showSide);
   $("#flagFs").classList.toggle("hidden", !["cable_flag","cable_wrap"].includes(TYPE));
   $("#panelFs").classList.toggle("hidden", TYPE!=="patch_panel");
 }
@@ -264,6 +301,8 @@ const LINE_TEMPLATES = [
   {t:"4 строки",                          bars:["bar","bar","bar","bar"], lines:[{},{},{},{}]},
   {t:"Заголовок (крупный жирный) + подпись", bars:["big","sm"],        lines:[{size:20,bold:true},{size:11}]},
   {t:"Заголовок + 2 подписи",             bars:["big","sm","sm"],      lines:[{size:14,bold:true},{size:9},{size:9}]},
+  {t:"Заголовок + 3 подписи",             bars:["big","sm","sm","sm"], lines:[{size:13,bold:true},{size:9},{size:9},{size:9}]},
+  {t:"Мелкая подпись + крупный заголовок", bars:["sm","big"],          lines:[{size:10},{size:20,bold:true}]},
 ];
 function renderLineTemplates(){
   $("#lineTpls").innerHTML = LINE_TEMPLATES.map((tpl,i)=>
@@ -325,6 +364,7 @@ function buildSpec(){
     length_mode:$("#lenMode").value, length_mm:+$("#lenMm").value, margin_mm:+$("#margin").value,
     code_data:$("#codeData").value, barcode_type:$("#barcodeType").value,
     show_code_text:$("#showCodeText").checked, invert:$("#invert").checked,
+    code_side:$("#codeSide").value, image_b64:LOGO,
     line_spacing:+$("#lineSpacing").value,
     cable_diameter_mm:+$("#cableDia").value, wrap_mm:+$("#wrapMm").value,
     flag_mirror:$("#flagMirror").checked, repeat:+$("#repeat").value,
@@ -533,8 +573,17 @@ $("#saveCsv").onclick=()=>{
 $("#cableType").onchange=()=>{ const v=+$("#cableType").value; if(v>0){ $("#cableDia").value=v; scheduleRender(); } };
 $("#cableDia").addEventListener("input",()=>{ $("#cableType").value="0"; });
 
+// logo / image upload for image & image_text types
+$("#logoFile").onchange=e=>{
+  const f=e.target.files[0]; if(!f) return;
+  const r=new FileReader();
+  r.onload=()=>{ LOGO=r.result; $("#clearLogo").classList.remove("hidden"); scheduleRender(); };
+  r.readAsDataURL(f);
+};
+$("#clearLogo").onclick=()=>{ LOGO=""; $("#logoFile").value=""; $("#clearLogo").classList.add("hidden"); scheduleRender(); };
+
 // wire global controls
-["#tape","#lenMode","#lenMm","#margin","#invert","#codeData","#barcodeType","#showCodeText","#cableDia","#wrapMm","#flagMirror","#repeat","#ports","#pitch","#lineSpacing"].forEach(s=>{ const el=$(s); el.oninput=scheduleRender; el.onchange=scheduleRender; });
+["#tape","#lenMode","#lenMm","#margin","#invert","#codeData","#barcodeType","#showCodeText","#codeSide","#cableDia","#wrapMm","#flagMirror","#repeat","#ports","#pitch","#lineSpacing"].forEach(s=>{ const el=$(s); el.oninput=scheduleRender; el.onchange=scheduleRender; });
 $("#lineSpacing").addEventListener("input",()=>{ $("#lsVal").textContent=(+$("#lineSpacing").value).toFixed(2); });
 $("#lenMode").addEventListener("change", applyLenMode);
 $("#addLine").onclick=()=>addLine("");

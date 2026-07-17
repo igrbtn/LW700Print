@@ -21,7 +21,7 @@ from .spec import DEFAULT_TAPE_MM, MAX_LINES, mm_to_dots, tape
 import math
 
 Align = Literal["left", "center", "right"]
-LabelType = Literal["text", "qr", "barcode", "text_qr",
+LabelType = Literal["text", "qr", "barcode", "text_qr", "image", "image_text",
                     "cable_flag", "cable_wrap", "patch_panel"]
 
 MAX_LENGTH_MM = 500  # safety cap
@@ -49,6 +49,8 @@ class LabelSpec:
     code_data: str = ""
     barcode_type: str = "code128"
     show_code_text: bool = True
+    code_side: str = "left"          # QR/image position relative to text: "left" | "right"
+    image_b64: str = ""              # data-URL or bare base64 for image / image_text
     invert: bool = False  # white on black
     line_spacing: float = 0.0   # inter-line gap as fraction of each line's band (0 = tight)
     # professional / cable labelling
@@ -83,6 +85,8 @@ class LabelSpec:
             code_data=str(d.get("code_data", "")),
             barcode_type=d.get("barcode_type", "code128"),
             show_code_text=bool(d.get("show_code_text", True)),
+            code_side=d.get("code_side", "left"),
+            image_b64=str(d.get("image_b64", "")),
             invert=bool(d.get("invert", False)),
             line_spacing=float(d.get("line_spacing", 0.0)),
             cable_diameter_mm=float(d.get("cable_diameter_mm", 5.0)),
@@ -184,6 +188,43 @@ def _barcode_img(data: str, symbology: str, height: int, show_text: bool) -> Ima
     return im.resize((max(1, int(im.width * ratio)), height), Image.NEAREST)
 
 
+def _side_by_side(box: Image.Image, cap: Image.Image, height: int, margin: int,
+                  fixed_len: int | None, side: str) -> Image.Image:
+    """Place a fixed box (QR/logo) and a text block next to each other.
+
+    side == "right" puts the box to the RIGHT of the text; otherwise to the left.
+    """
+    total = box.width + 3 * margin + cap.width
+    length = fixed_len or total
+    img = Image.new("1", (max(length, total), height), 1)
+    if side == "right":
+        img.paste(cap, (margin, 0))
+        img.paste(box, (img.width - box.width - margin, 0))
+    else:
+        img.paste(box, (margin, 0))
+        img.paste(cap, (box.width + 2 * margin, 0))
+    return img
+
+
+def _decode_logo(b64: str, height: int) -> Image.Image:
+    """Decode an uploaded image (data-URL or bare base64) to a 1-bit strip fit to the
+    tape height. Transparency is flattened onto white; grayscale is dithered to 1-bit."""
+    if not b64:
+        return Image.new("1", (height, height), 1)  # blank placeholder square
+    import base64
+    raw = base64.b64decode(b64.split(",", 1)[1] if "," in b64 else b64)
+    im = Image.open(io.BytesIO(raw))
+    if im.mode in ("RGBA", "LA", "P"):
+        im = im.convert("RGBA")
+        bg = Image.new("RGBA", im.size, (255, 255, 255, 255))
+        im = Image.alpha_composite(bg, im).convert("L")
+    else:
+        im = im.convert("L")
+    ratio = height / im.height
+    im = im.resize((max(1, int(im.width * ratio)), height), Image.LANCZOS)
+    return im.convert("1")  # Floyd-Steinberg dithering
+
+
 def render(spec: LabelSpec) -> Image.Image:
     t = tape(spec.tape_mm)
     height = t.printable_dots
@@ -194,19 +235,11 @@ def render(spec: LabelSpec) -> Image.Image:
         img = _text_block(spec.lines, height, margin, fixed_len, spec.line_spacing / 2)
 
     elif spec.label_type == "qr":
+        # pure QR only (use text_qr to pair it with a caption)
         qr = _qr_img(spec.code_data or (spec.lines[0].text if spec.lines else " "), height)
         length = fixed_len or (qr.width + 2 * margin)
         img = Image.new("1", (max(length, qr.width + 2 * margin), height), 1)
-        img.paste(qr, (margin, 0))
-        if spec.show_code_text and spec.lines and spec.lines[0].text:
-            # caption to the right of the QR
-            cap = _text_block(spec.lines, height, margin, None, spec.line_spacing / 2)
-            need = qr.width + 2 * margin + cap.width
-            if need > img.width:
-                new = Image.new("1", (need, height), 1)
-                new.paste(qr, (margin, 0))
-                img = new
-            img.paste(cap, (qr.width + 2 * margin, 0))
+        img.paste(qr, ((img.width - qr.width) // 2, 0))
 
     elif spec.label_type == "barcode":
         bc = _barcode_img(spec.code_data, spec.barcode_type, height, spec.show_code_text)
@@ -218,10 +251,18 @@ def render(spec: LabelSpec) -> Image.Image:
     elif spec.label_type == "text_qr":
         qr = _qr_img(spec.code_data or " ", height)
         cap = _text_block(spec.lines, height, margin, None, spec.line_spacing / 2)
-        length = fixed_len or (qr.width + 3 * margin + cap.width)
-        img = Image.new("1", (max(length, qr.width + 3 * margin + cap.width), height), 1)
-        img.paste(qr, (margin, 0))
-        img.paste(cap, (qr.width + 2 * margin, 0))
+        img = _side_by_side(qr, cap, height, margin, fixed_len, spec.code_side)
+
+    elif spec.label_type == "image":
+        logo = _decode_logo(spec.image_b64, height)
+        length = fixed_len or (logo.width + 2 * margin)
+        img = Image.new("1", (max(length, logo.width + 2 * margin), height), 1)
+        img.paste(logo, ((img.width - logo.width) // 2, 0))
+
+    elif spec.label_type == "image_text":
+        logo = _decode_logo(spec.image_b64, height)
+        cap = _text_block(spec.lines, height, margin, None, spec.line_spacing / 2)
+        img = _side_by_side(logo, cap, height, margin, fixed_len, spec.code_side)
 
     elif spec.label_type == "cable_flag":
         img = _cable_flag(spec, height, margin)
