@@ -128,138 +128,139 @@
   <span id="status" class="badge">проверка принтера...</span>
   <span class="sp"></span>
   <span id="dims" class="dims"></span>
-  <button class="ghost" id="cutBtn">Обрез</button>
-  <button class="ghost" id="stopBtn">Стоп</button>
+  <button class="ghost" id="langBtn" title="Язык / Language">EN</button>
+  <button class="ghost" id="cutBtn" data-i18n="cut">Обрез</button>
+  <button class="ghost" id="stopBtn" data-i18n="stop">Стоп</button>
   <button class="primary" id="printBtn">Печать</button>
 </header>
 <div id="typeRibbon">
   <div class="ribGroup">
-    <span class="rlabel">Лента</span>
-    <select id="tape" class="rib" title="Ширина ленты (Авто - определить по принтеру)"></select>
-    <select id="lenMode" class="rib" title="Режим длины">
-      <option value="auto">Авто длина</option>
-      <option value="fixed">Фикс. мм</option>
+    <span class="rlabel" data-i18n="tape">Лента</span>
+    <select id="tape" class="rib" data-i18nt="tapeTitle"></select>
+    <select id="lenMode" class="rib" data-i18nt="lenModeTitle">
+      <option value="auto" data-i18n="lenAuto">Авто длина</option>
+      <option value="fixed" data-i18n="lenFixed">Фикс. мм</option>
     </select>
-    <input type="number" id="lenMm" class="rib num" value="40" min="5" max="500" step="1" title="Длина, мм">
-    <span class="rlabel">Поля</span>
-    <input type="number" id="margin" class="rib num" value="0" min="0" max="30" step="0.5" title="Поля, мм">
-    <label class="toggle" title="Белым по чёрному"><input type="checkbox" id="invert"> Инверсия</label>
+    <input type="number" id="lenMm" class="rib num" value="40" min="5" max="500" step="1" data-i18nt="lenMmTitle">
+    <span class="rlabel" data-i18n="margins">Поля</span>
+    <input type="number" id="margin" class="rib num" value="0" min="0" max="30" step="0.5" data-i18nt="marginsTitle">
+    <label class="toggle" data-i18nt="invertTitle"><input type="checkbox" id="invert"> <span data-i18n="invert">Инверсия</span></label>
   </div>
   <span class="ribDiv"></span>
-  <span class="rlabel">Тип наклейки</span>
+  <span class="rlabel" data-i18n="labelType">Тип наклейки</span>
   <div class="chips" id="typeChips"></div>
-  <select id="typeMore" class="rib" title="Другие типы наклеек"></select>
+  <select id="typeMore" class="rib" data-i18nt="moreTypes"></select>
 </div>
 <main>
   <section class="editor">
     <fieldset id="textFs">
-      <legend>Строки (1-8)</legend>
+      <legend data-i18n="linesLegend">Строки (1-8)</legend>
       <div class="tplRow" id="lineTpls"></div>
       <div id="lines"></div>
-      <button class="ghost" id="addLine">+ строка</button>
-      <label class="f" style="margin-top:10px">Межстрочное расстояние: <span id="lsVal">0.00</span></label>
+      <button class="ghost" id="addLine" data-i18n="addLine">+ строка</button>
+      <label class="f" style="margin-top:10px"><span data-i18n="lineSpacing">Межстрочное расстояние</span>: <span id="lsVal">0.00</span></label>
       <input type="range" id="lineSpacing" min="0" max="0.8" step="0.05" value="0" style="width:100%">
     </fieldset>
 
     <fieldset id="codeFs" class="hidden">
-      <legend>Код</legend>
-      <label class="f">Данные (QR / штрихкод)</label>
-      <input type="text" id="codeData" placeholder="https://... или 1234567890">
+      <legend data-i18n="codeLegend">Код</legend>
+      <label class="f" data-i18n="codeData">Данные (QR / штрихкод)</label>
+      <input type="text" id="codeData" data-i18np="codeDataPh" placeholder="https://... или 1234567890">
       <div class="row" style="margin-top:8px">
-        <div><label class="f">Тип штрихкода</label><select id="barcodeType"></select></div>
-        <div><label class="f">&nbsp;</label><label class="toggle"><input type="checkbox" id="showCodeText" checked> Подпись под кодом</label></div>
+        <div><label class="f" data-i18n="barcodeType">Тип штрихкода</label><select id="barcodeType"></select></div>
+        <div><label class="f">&nbsp;</label><label class="toggle"><input type="checkbox" id="showCodeText" checked> <span data-i18n="codeCaption">Подпись под кодом</span></label></div>
       </div>
-      <div class="hint">«QR» - только код. Подпись рядом - тип «Текст + QR» (сторона ниже). «Подпись под кодом» - для штрихкода.</div>
+      <div class="hint" data-i18n="codeHint">«QR» - только код. Подпись рядом - тип «Текст + QR» (сторона ниже). «Подпись под кодом» - для штрихкода.</div>
     </fieldset>
 
     <fieldset id="imageFs" class="hidden">
-      <legend>Изображение / логотип</legend>
+      <legend data-i18n="imageLegend">Изображение / логотип</legend>
       <div class="row" style="align-items:center; gap:8px; flex-wrap:wrap">
-        <label class="ghost fbtn" for="logoFile" style="flex:0 0 auto">Файл</label>
+        <label class="ghost fbtn" for="logoFile" style="flex:0 0 auto" data-i18n="fileBtn">Файл</label>
         <input type="file" id="logoFile" accept="image/*" style="display:none">
-        <button class="ghost" id="pickIcon" style="flex:0 0 auto">Иконки</button>
-        <button class="ghost hidden" id="clearLogo" style="flex:0 0 auto">Убрать</button>
+        <button class="ghost" id="pickIcon" style="flex:0 0 auto" data-i18n="iconsBtn">Иконки</button>
+        <button class="ghost hidden" id="clearLogo" style="flex:0 0 auto" data-i18n="removeBtn">Убрать</button>
       </div>
-      <div id="logoName" class="csvbox" style="margin-top:6px">файл не выбран</div>
+      <div id="logoName" class="csvbox" style="margin-top:6px" data-i18n="noFile">файл не выбран</div>
     </fieldset>
 
     <fieldset id="sideFs" class="hidden">
-      <legend>Расположение</legend>
-      <label class="f">Код / изображение относительно текста</label>
+      <legend data-i18n="sideLegend">Расположение</legend>
+      <label class="f" data-i18n="sideLabel">Код / изображение относительно текста</label>
       <select id="codeSide">
-        <option value="left">Слева от текста</option>
-        <option value="right">Справа от текста</option>
+        <option value="left" data-i18n="sideLeft">Слева от текста</option>
+        <option value="right" data-i18n="sideRight">Справа от текста</option>
       </select>
     </fieldset>
 
     <fieldset id="flagFs" class="hidden">
-      <legend>Кабель (флажок / обёртка)</legend>
-      <label class="f">Тип кабеля</label>
+      <legend data-i18n="flagLegend">Кабель (флажок / обёртка)</legend>
+      <label class="f" data-i18n="cableType">Тип кабеля</label>
       <select id="cableType">
-        <option value="0">Ручной ввод</option>
-        <option value="2.5">Оптика LC/патч (2.5 мм)</option>
-        <option value="3">Оптика в оболочке (3 мм)</option>
-        <option value="6" selected>UTP Cat5e/6 (6 мм)</option>
-        <option value="7">UTP Cat6a / коаксиал (7 мм)</option>
-        <option value="8">Силовой IEC (8 мм)</option>
-        <option value="12">Силовой толстый (12 мм)</option>
+        <option value="0" data-i18n="cableManual">Ручной ввод</option>
+        <option value="2.5" data-i18n="cableOptLc">Оптика LC/патч (2.5 мм)</option>
+        <option value="3" data-i18n="cableOpt3">Оптика в оболочке (3 мм)</option>
+        <option value="6" selected data-i18n="cableUtp6">UTP Cat5e/6 (6 мм)</option>
+        <option value="7" data-i18n="cableUtp7">UTP Cat6a / коаксиал (7 мм)</option>
+        <option value="8" data-i18n="cablePwr8">Силовой IEC (8 мм)</option>
+        <option value="12" data-i18n="cablePwr12">Силовой толстый (12 мм)</option>
       </select>
       <div class="row" style="margin-top:8px">
-        <div><label class="f">Диаметр кабеля, мм</label><input type="number" id="cableDia" value="6" min="1" max="50" step="0.5"></div>
-        <div><label class="f">Обхват вручную, мм (0=авто)</label><input type="number" id="wrapMm" value="0" min="0" max="200" step="1"></div>
+        <div><label class="f" data-i18n="cableDia">Диаметр кабеля, мм</label><input type="number" id="cableDia" value="6" min="1" max="50" step="0.5"></div>
+        <div><label class="f" data-i18n="wrapMm">Обхват вручную, мм (0=авто)</label><input type="number" id="wrapMm" value="0" min="0" max="200" step="1"></div>
       </div>
       <div class="row" style="margin-top:8px">
-        <div><label class="f">&nbsp;</label><label class="toggle"><input type="checkbox" id="flagMirror" checked> Зеркалить 2-й конец (флажок)</label></div>
-        <div><label class="f">Повторов (обёртка)</label><input type="number" id="repeat" value="4" min="1" max="20" step="1"></div>
+        <div><label class="f">&nbsp;</label><label class="toggle"><input type="checkbox" id="flagMirror" checked> <span data-i18n="flagMirror">Зеркалить 2-й конец (флажок)</span></label></div>
+        <div><label class="f" data-i18n="repeat">Повторов (обёртка)</label><input type="number" id="repeat" value="4" min="1" max="20" step="1"></div>
       </div>
-      <div class="hint">Флажок: текст у обоих концов, середина (обхват = π·диаметр) обнимает кабель. Обёртка: текст повторяется вдоль.</div>
+      <div class="hint" data-i18n="flagHint">Флажок: текст у обоих концов, середина (обхват = π·диаметр) обнимает кабель. Обёртка: текст повторяется вдоль.</div>
     </fieldset>
 
     <fieldset id="panelFs" class="hidden">
-      <legend>Патч-панель</legend>
+      <legend data-i18n="panelLegend">Патч-панель</legend>
       <div class="row">
-        <div><label class="f">Портов</label><input type="number" id="ports" value="12" min="1" max="48" step="1"></div>
-        <div><label class="f">Шаг, мм (0=по длине)</label><input type="number" id="pitch" value="0" min="0" max="50" step="0.5"></div>
+        <div><label class="f" data-i18n="ports">Портов</label><input type="number" id="ports" value="12" min="1" max="48" step="1"></div>
+        <div><label class="f" data-i18n="pitch">Шаг, мм (0=по длине)</label><input type="number" id="pitch" value="0" min="0" max="50" step="0.5"></div>
       </div>
-      <div class="hint">Ячейка на порт. Строки = подписи портов (по одной на порт), иначе авто-нумерация 1..N.</div>
+      <div class="hint" data-i18n="panelHint">Ячейка на порт. Строки = подписи портов (по одной на порт), иначе авто-нумерация 1..N.</div>
     </fieldset>
 
     <fieldset>
-      <legend>Импорт из CSV (пакетная печать)</legend>
+      <legend data-i18n="csvLegend">Импорт из CSV (пакетная печать)</legend>
       <div class="row" style="align-items:center; gap:8px">
-        <label class="ghost fbtn" for="csvFile" style="flex:0 0 auto">Выберите файл</label>
-        <button class="ghost hidden" id="closeCsvBtn" style="flex:0 0 auto">Закрыть файл</button>
+        <label class="ghost fbtn" for="csvFile" style="flex:0 0 auto" data-i18n="chooseFile">Выберите файл</label>
+        <button class="ghost hidden" id="closeCsvBtn" style="flex:0 0 auto" data-i18n="closeFile">Закрыть файл</button>
         <input type="file" id="csvFile" accept=".csv" style="display:none">
       </div>
-      <div id="csvFname" class="csvbox" style="margin-top:6px">файл не выбран</div>
+      <div id="csvFname" class="csvbox" style="margin-top:6px" data-i18n="noFile">файл не выбран</div>
       <div id="csvInfo" class="csvbox"></div>
-      <label class="toggle hidden" id="groupWrap" style="margin-top:8px"><input type="checkbox" id="groupMode"> Мультилайн: собрать строки по колонке <b>group</b> (формат с line/bold/align/font/size_pt)</label>
+      <label class="toggle hidden" id="groupWrap" style="margin-top:8px"><input type="checkbox" id="groupMode"> <span data-i18n="groupMode">Мультилайн: собрать строки по колонке <b>group</b> (формат с line/bold/align/font/size_pt)</span></label>
       <div class="row" style="margin-top:8px">
-        <button class="ghost hidden" id="previewAllBtn">Предпросмотр</button>
-        <button class="primary hidden" id="batchBtn">Печать</button>
+        <button class="ghost hidden" id="previewAllBtn" data-i18n="previewBtn">Предпросмотр</button>
+        <button class="primary hidden" id="batchBtn" data-i18n="print">Печать</button>
       </div>
     </fieldset>
 
     <fieldset>
-      <legend>CSV-шаблон для наполнения</legend>
-      <button class="ghost" id="saveCsv">Сохранить наклейку как CSV-шаблон</button>
+      <legend data-i18n="tplLegend">CSV-шаблон для наполнения</legend>
+      <button class="ghost" id="saveCsv" data-i18n="saveTpl">Сохранить наклейку как CSV-шаблон</button>
     </fieldset>
   </section>
 
   <section class="stage">
     <div class="stageTop">
-      <b style="font-weight:600">Превью</b>
+      <b style="font-weight:600" data-i18n="preview">Превью</b>
       <span id="dims2" class="dims"></span>
       <span class="sp" style="flex:1"></span>
-      <button class="ghost" id="refreshBtn">Обновить</button>
+      <button class="ghost" id="refreshBtn" data-i18n="refresh">Обновить</button>
     </div>
     <div class="preview">
       <img id="preview" alt="preview">
       <div id="batchGallery" class="hidden"></div>
     </div>
-    <div id="paneResizer" class="hidden" title="Перетащи, чтобы изменить высоту таблицы"></div>
+    <div id="paneResizer" class="hidden" data-i18nt="resizerTitle" title="Перетащи, чтобы изменить высоту таблицы"></div>
     <div id="tablePane" class="hidden">
-      <input type="text" id="csvSearch" placeholder="Поиск / фильтр по всем колонкам...">
+      <input type="text" id="csvSearch" data-i18np="searchPh" placeholder="Поиск / фильтр по всем колонкам...">
       <div id="csvTableWrap"></div>
       <div id="selInfo" class="csvbox" style="margin-top:6px"></div>
     </div>
@@ -270,7 +271,7 @@
 
 <div id="iconModal">
   <div class="imodal">
-    <div class="imodalHd"><h3>Выбор иконки</h3><button class="ghost" id="iconClose">Закрыть</button></div>
+    <div class="imodalHd"><h3 data-i18n="iconModalTitle">Выбор иконки</h3><button class="ghost" id="iconClose" data-i18n="close">Закрыть</button></div>
     <div class="itabs" id="iconTabs"></div>
     <div class="igrid" id="iconGrid"></div>
   </div>
@@ -284,24 +285,137 @@ function tapeMm(){ const v=$("#tape").value; return v==="auto" ? (detectedTape||
 // length: hide the mm input in auto mode, show it only for fixed length
 function applyLenMode(){ $("#lenMm").classList.toggle("hidden", $("#lenMode").value!=="fixed"); }
 
+// ---- i18n (ru/en) ----
+let LANG = localStorage.getItem("lw_lang") || "ru";
+const I18N = {
+  ru: {
+    cut:"Обрез", stop:"Стоп", print:"Печать", printBatch:"Печать партии",
+    tape:"Лента", tapeTitle:"Ширина ленты (Авто - определить по принтеру)",
+    lenModeTitle:"Режим длины", lenAuto:"Авто длина", lenFixed:"Фикс. мм", lenMmTitle:"Длина, мм",
+    margins:"Поля", marginsTitle:"Поля, мм", invert:"Инверсия", invertTitle:"Белым по чёрному",
+    labelType:"Тип наклейки", moreTypes:"Другие типы наклеек", moreTypesOpt:"Ещё типы…",
+    linesLegend:"Строки (1-8)", addLine:"+ строка", lineSpacing:"Межстрочное расстояние",
+    codeLegend:"Код", codeData:"Данные (QR / штрихкод)", codeDataPh:"https://... или 1234567890",
+    barcodeType:"Тип штрихкода", codeCaption:"Подпись под кодом",
+    codeHint:"«QR» - только код. Подпись рядом - тип «Текст + QR» (сторона ниже). «Подпись под кодом» - для штрихкода.",
+    imageLegend:"Изображение / логотип", fileBtn:"Файл", iconsBtn:"Иконки", removeBtn:"Убрать", noFile:"файл не выбран",
+    sideLegend:"Расположение", sideLabel:"Код / изображение относительно текста", sideLeft:"Слева от текста", sideRight:"Справа от текста",
+    flagLegend:"Кабель (флажок / обёртка)", cableType:"Тип кабеля",
+    cableManual:"Ручной ввод", cableOptLc:"Оптика LC/патч (2.5 мм)", cableOpt3:"Оптика в оболочке (3 мм)",
+    cableUtp6:"UTP Cat5e/6 (6 мм)", cableUtp7:"UTP Cat6a / коаксиал (7 мм)", cablePwr8:"Силовой IEC (8 мм)", cablePwr12:"Силовой толстый (12 мм)",
+    cableDia:"Диаметр кабеля, мм", wrapMm:"Обхват вручную, мм (0=авто)", flagMirror:"Зеркалить 2-й конец (флажок)", repeat:"Повторов (обёртка)",
+    flagHint:"Флажок: текст у обоих концов, середина (обхват = π·диаметр) обнимает кабель. Обёртка: текст повторяется вдоль.",
+    panelLegend:"Патч-панель", ports:"Портов", pitch:"Шаг, мм (0=по длине)",
+    panelHint:"Ячейка на порт. Строки = подписи портов (по одной на порт), иначе авто-нумерация 1..N.",
+    csvLegend:"Импорт из CSV (пакетная печать)", chooseFile:"Выберите файл", closeFile:"Закрыть файл",
+    groupMode:"Мультилайн: собрать строки по колонке <b>group</b> (формат с line/bold/align/font/size_pt)",
+    previewBtn:"Предпросмотр", tplLegend:"CSV-шаблон для наполнения", saveTpl:"Сохранить наклейку как CSV-шаблон",
+    preview:"Превью", refresh:"Обновить", resizerTitle:"Перетащи, чтобы изменить высоту таблицы",
+    searchPh:"Поиск / фильтр по всем колонкам...", iconModalTitle:"Выбор иконки", close:"Закрыть",
+    statusChecking:"проверка принтера...", statusNotFound:"принтер не найден", statusConnected:"принтер подключён",
+    statusTape:n=>`принтер: лента ${n}мм`, statusUnavailable:"статус недоступен",
+    autoOpt:"Авто", autoOptTape:n=>`Авто: ${n}мм`,
+    lineN:n=>"Строка "+n, maxLines:"Максимум 8 строк",
+    batchCount:n=>`Партия: ${n} наклеек`, batchLen:mm=>`длина ~${mm} мм`,
+    rendering:n=>`Рендерю ${n} наклеек...`, renderingGroup:n=>`Рендерю ${n} наклеек (группировка)...`,
+    previewDone:n=>`Предпросмотр: ${n}. Проверь и жми «Печать».`,
+    noRows:"Нет строк", noRowsPrint:"Нет строк для печати",
+    confirmBatch:n=>`Отправить на печать ${n} наклеек?`, confirmBatchGroup:n=>`Отправить на печать ${n} наклеек (группировка)?`,
+    batchSent:n=>`Пакет: ${n} наклеек отправлено`,
+    csvInfo:(n,cols)=>`${n} строк · колонки: ${cols}`,
+    selGroups:(all,sel)=>`Групп/наклеек: ${all} · выбрано ${sel}`, selAll:"- (все)",
+    selRows:(shown,sel)=>`Показано ${shown} · выбрано ${sel}`, selFilter:"- (весь фильтр)",
+    printedTitle:"напечатано", done:"готово", stopToast:"Стоп: остановка после текущей наклейки", cutToast:"обрез",
+    tplSaved:n=>`CSV-шаблон сохранён (${n} строк). Дублируй группы и наполняй текст.`,
+    iconChosen:n=>"иконка: "+n, dimsLabel:(dots,mm)=>`${dots} точек · ~${mm} мм`,
+    types:{text:"Текст", qr:"QR", barcode:"Штрихкод", text_qr:"Текст + QR", image:"Изображение", image_text:"Изображение + текст", cable_flag:"Флажок кабеля", image_flag:"Изображение + флажок", qr_flag:"QR + флажок", cable_wrap:"Обёртка кабеля", patch_panel:"Патч-панель"},
+    themes:{"ЦОД":"ЦОД","Стрелки":"Стрелки","Офис":"Офис","Дом":"Дом","Электричество":"Электричество","Эмодзи":"Эмодзи"},
+    tpl:["1 строка","2 строки","3 строки","4 строки","Заголовок (крупный жирный) + подпись","Заголовок + 2 подписи","Заголовок + 3 подписи"]
+  },
+  en: {
+    cut:"Cut", stop:"Stop", print:"Print", printBatch:"Print batch",
+    tape:"Tape", tapeTitle:"Tape width (Auto - detect from printer)",
+    lenModeTitle:"Length mode", lenAuto:"Auto length", lenFixed:"Fixed mm", lenMmTitle:"Length, mm",
+    margins:"Margin", marginsTitle:"Margin, mm", invert:"Invert", invertTitle:"White on black",
+    labelType:"Label type", moreTypes:"Other label types", moreTypesOpt:"More types…",
+    linesLegend:"Lines (1-8)", addLine:"+ line", lineSpacing:"Line spacing",
+    codeLegend:"Code", codeData:"Data (QR / barcode)", codeDataPh:"https://... or 1234567890",
+    barcodeType:"Barcode type", codeCaption:"Caption under code",
+    codeHint:"\"QR\" - code only. Caption alongside - use \"Text + QR\" (side below). \"Caption under code\" - for barcode.",
+    imageLegend:"Image / logo", fileBtn:"File", iconsBtn:"Icons", removeBtn:"Remove", noFile:"no file selected",
+    sideLegend:"Placement", sideLabel:"Code / image relative to text", sideLeft:"Left of text", sideRight:"Right of text",
+    flagLegend:"Cable (flag / wrap)", cableType:"Cable type",
+    cableManual:"Manual entry", cableOptLc:"Fiber LC/patch (2.5 mm)", cableOpt3:"Jacketed fiber (3 mm)",
+    cableUtp6:"UTP Cat5e/6 (6 mm)", cableUtp7:"UTP Cat6a / coax (7 mm)", cablePwr8:"Power IEC (8 mm)", cablePwr12:"Power thick (12 mm)",
+    cableDia:"Cable diameter, mm", wrapMm:"Wrap length, mm (0=auto)", flagMirror:"Mirror 2nd end (flag)", repeat:"Repeats (wrap)",
+    flagHint:"Flag: text at both ends, the middle (wrap = π·diameter) hugs the cable. Wrap: text repeats along the length.",
+    panelLegend:"Patch panel", ports:"Ports", pitch:"Pitch, mm (0=by length)",
+    panelHint:"One cell per port. Lines = port captions (one per port), otherwise auto-numbered 1..N.",
+    csvLegend:"CSV import (batch print)", chooseFile:"Choose file", closeFile:"Close file",
+    groupMode:"Multiline: group rows by the <b>group</b> column (format with line/bold/align/font/size_pt)",
+    previewBtn:"Preview", tplLegend:"CSV template to fill", saveTpl:"Save label as CSV template",
+    preview:"Preview", refresh:"Refresh", resizerTitle:"Drag to resize the table",
+    searchPh:"Search / filter across all columns...", iconModalTitle:"Pick an icon", close:"Close",
+    statusChecking:"checking printer...", statusNotFound:"printer not found", statusConnected:"printer connected",
+    statusTape:n=>`printer: ${n}mm tape`, statusUnavailable:"status unavailable",
+    autoOpt:"Auto", autoOptTape:n=>`Auto: ${n}mm`,
+    lineN:n=>"Line "+n, maxLines:"Max 8 lines",
+    batchCount:n=>`Batch: ${n} labels`, batchLen:mm=>`length ~${mm} mm`,
+    rendering:n=>`Rendering ${n} labels...`, renderingGroup:n=>`Rendering ${n} labels (grouped)...`,
+    previewDone:n=>`Preview: ${n}. Check and hit "Print".`,
+    noRows:"No rows", noRowsPrint:"No rows to print",
+    confirmBatch:n=>`Send ${n} labels to print?`, confirmBatchGroup:n=>`Send ${n} labels to print (grouped)?`,
+    batchSent:n=>`Batch: ${n} labels sent`,
+    csvInfo:(n,cols)=>`${n} rows · columns: ${cols}`,
+    selGroups:(all,sel)=>`Groups/labels: ${all} · selected ${sel}`, selAll:"- (all)",
+    selRows:(shown,sel)=>`Shown ${shown} · selected ${sel}`, selFilter:"- (whole filter)",
+    printedTitle:"printed", done:"done", stopToast:"Stop: halting after the current label", cutToast:"cut",
+    tplSaved:n=>`CSV template saved (${n} lines). Duplicate groups and fill the text.`,
+    iconChosen:n=>"icon: "+n, dimsLabel:(dots,mm)=>`${dots} dots · ~${mm} mm`,
+    types:{text:"Text", qr:"QR", barcode:"Barcode", text_qr:"Text + QR", image:"Image", image_text:"Image + text", cable_flag:"Cable flag", image_flag:"Image + flag", qr_flag:"QR + flag", cable_wrap:"Cable wrap", patch_panel:"Patch panel"},
+    themes:{"ЦОД":"Datacenter","Стрелки":"Arrows","Офис":"Office","Дом":"Home","Электричество":"Electricity","Эмодзи":"Emoji"},
+    tpl:["1 line","2 lines","3 lines","4 lines","Header (large bold) + caption","Header + 2 captions","Header + 3 captions"]
+  }
+};
+function t(key, ...args){ const v=(I18N[LANG]||I18N.ru)[key]; return typeof v==="function" ? v(...args) : (v!=null ? v : key); }
+const typeLabel = tp => (I18N[LANG].types||{})[tp] || tp;
+const themeLabel = th => (I18N[LANG].themes||{})[th] || th;
+function applyLang(){
+  document.querySelectorAll("[data-i18n]").forEach(el=>{ const v=t(el.dataset.i18n); if(v!=null) el.innerHTML=v; });
+  document.querySelectorAll("[data-i18np]").forEach(el=>{ el.placeholder=t(el.dataset.i18np); });
+  document.querySelectorAll("[data-i18nt]").forEach(el=>{ el.title=t(el.dataset.i18nt); });
+  document.documentElement.lang = LANG;
+  $("#langBtn").textContent = LANG==="ru" ? "EN" : "RU";
+  if(META) rebuildTypes();
+  renderLineTemplates();
+  updatePrintBtn();
+  renumber();
+  checkStatus();
+  if(typeof doRender==="function") doRender();
+  if(CSV){ renderCsvTable(); if(batchShown()) refreshBatch(true); }
+}
+function setLang(l){ LANG=l; localStorage.setItem("lw_lang", l); applyLang(); }
+function updatePrintBtn(){ $("#printBtn").textContent = CSV ? t("printBatch") : t("print"); }
+
 function toast(msg, ms=2600){ const t=$("#toast"); t.textContent=msg; t.classList.add("show"); clearTimeout(t._t); t._t=setTimeout(()=>t.classList.remove("show"), ms); }
 
-async function loadMeta(){
-  META = await (await fetch("/api/meta")).json();
-  const tape = $("#tape");
-  tape.innerHTML = `<option value="auto">Авто</option>` + META.tapes.map(t=>`<option value="${t.mm}">${t.mm} мм</option>`).join("");
-  tape.value = "auto";
-  $("#barcodeType").innerHTML = META.barcode_types.map(b=>`<option>${b}</option>`).join("");
-  const labels = {text:"Текст", qr:"QR", barcode:"Штрихкод", text_qr:"Текст + QR",
-    image:"Изображение", image_text:"Изображение + текст",
-    cable_flag:"Флажок кабеля", image_flag:"Изображение + флажок", qr_flag:"QR + флажок",
-    cable_wrap:"Обёртка кабеля", patch_panel:"Патч-панель"};
-  const others = META.label_types.filter(t=>!PRIMARY_TYPES.includes(t));
-  $("#typeChips").innerHTML = PRIMARY_TYPES.map(t=>`<span class="chip" data-t="${t}">${labels[t]||t}</span>`).join("");
-  $("#typeMore").innerHTML = `<option value="">Ещё типы…</option>` + others.map(t=>`<option value="${t}">${labels[t]||t}</option>`).join("");
+function rebuildTypes(){
+  if(!META) return;
+  const unit = LANG==="ru" ? "мм" : "mm";
+  const sel = $("#tape").value || "auto";
+  $("#tape").innerHTML = `<option value="auto">${t("autoOpt")}</option>` + META.tapes.map(x=>`<option value="${x.mm}">${x.mm} ${unit}</option>`).join("");
+  $("#tape").value = sel;
+  const others = META.label_types.filter(x=>!PRIMARY_TYPES.includes(x));
+  $("#typeChips").innerHTML = PRIMARY_TYPES.map(x=>`<span class="chip" data-t="${x}">${typeLabel(x)}</span>`).join("");
+  $("#typeMore").innerHTML = `<option value="">${t("moreTypesOpt")}</option>` + others.map(x=>`<option value="${x}">${typeLabel(x)}</option>`).join("");
   $("#typeChips").querySelectorAll(".chip").forEach(c=>c.onclick=()=>setType(c.dataset.t));
   $("#typeMore").onchange=()=>{ if($("#typeMore").value) setType($("#typeMore").value); };
   syncTypeUI();
+}
+async function loadMeta(){
+  META = await (await fetch("/api/meta")).json();
+  $("#barcodeType").innerHTML = META.barcode_types.map(b=>`<option>${b}</option>`).join("");
+  rebuildTypes();
   renderLineTemplates();
   addLine("LW-700");
   applyTypeUI();
@@ -342,7 +456,7 @@ const LINE_TEMPLATES = [
 ];
 function renderLineTemplates(){
   $("#lineTpls").innerHTML = LINE_TEMPLATES.map((tpl,i)=>
-    `<div class="tplbtn" data-i="${i}" title="${tpl.t}">`+
+    `<div class="tplbtn" data-i="${i}" title="${t("tpl")[i]||tpl.t}">`+
       tpl.bars.map(b=>`<span class="bar ${b==="bar"?"":b}"></span>`).join("")+
     `</div>`).join("");
   $("#lineTpls").querySelectorAll(".tplbtn").forEach(b=>b.onclick=()=>applyLineTemplate(LINE_TEMPLATES[+b.dataset.i]));
@@ -361,12 +475,12 @@ function applyLineTemplate(tpl){
 
 function addLine(text=""){
   const lines = $("#lines");
-  if (lines.children.length >= META.max_lines){ toast("Максимум 8 строк"); return; }
+  if (lines.children.length >= META.max_lines){ toast(t("maxLines")); return; }
   const idx = lines.children.length+1;
   const div = document.createElement("div");
   div.className = "line";
   div.innerHTML = `
-    <div class="hd"><b>Строка ${idx}</b>
+    <div class="hd"><b>${t("lineN",idx)}</b>
       <button class="iconbtn up" title="Выше">↑</button>
       <button class="iconbtn dn" title="Ниже">↓</button>
       <button class="iconbtn del" title="Удалить">✕</button>
@@ -385,7 +499,7 @@ function addLine(text=""){
   div.querySelector(".dn").onclick=()=>{ if(div.nextElementSibling){lines.insertBefore(div.nextElementSibling,div); renumber(); scheduleRender();} };
   renumber();
 }
-function renumber(){ $("#lines").querySelectorAll(".line b").forEach((b,i)=>b.textContent="Строка "+(i+1)); }
+function renumber(){ $("#lines").querySelectorAll(".line b").forEach((b,i)=>b.textContent=t("lineN",i+1)); }
 
 function collectLines(){
   return [...$("#lines").querySelectorAll(".line")].map(d=>({
@@ -416,7 +530,7 @@ async function doRender(){
     const dots=r.headers.get("X-Label-Dots"), mm=r.headers.get("X-Label-Mm");
     const blob = await r.blob();
     $("#preview").src = URL.createObjectURL(blob);
-    const d = `${dots} точек · ~${mm} мм`; $("#dims").textContent=d; $("#dims2").textContent=d;
+    const d = t("dimsLabel", dots, mm); $("#dims").textContent=d; $("#dims2").textContent=d;
   }catch(e){ toast("Сбой: "+e); }
 }
 
@@ -425,14 +539,14 @@ async function checkStatus(){
     const s = await (await fetch("/api/status")).json();
     const b=$("#status");
     b.className = "badge "+(s.connected?"on":"off");
-    b.textContent = s.connected ? (s.tape_mm?`принтер: лента ${s.tape_mm}мм`:"принтер подключён") : "принтер не найден";
+    b.textContent = s.connected ? (s.tape_mm? t("statusTape",s.tape_mm) : t("statusConnected")) : t("statusNotFound");
     b.title = s.detail;
     const autoOpt=$("#tape").querySelector('option[value="auto"]');
     const prev=detectedTape;
     detectedTape = (s.connected && s.tape_mm) ? s.tape_mm : null;
-    if(autoOpt) autoOpt.textContent = detectedTape ? `Авто: ${detectedTape}мм` : "Авто";
+    if(autoOpt) autoOpt.textContent = detectedTape ? t("autoOptTape",detectedTape) : t("autoOpt");
     if($("#tape").value==="auto" && detectedTape!==prev) scheduleRender();
-  }catch(e){ $("#status").textContent="статус недоступен"; }
+  }catch(e){ $("#status").textContent=t("statusUnavailable"); }
 }
 
 async function doPrint(){
@@ -454,19 +568,19 @@ $("#csvFile").onchange = async e=>{
   const j = await (await fetch("/api/csv",{method:"POST",body:fd})).json();
   j.rows.forEach((r,i)=>r.__i=i);
   CSV = j; csvSel = new Set(); csvSort={col:null,dir:1};
-  $("#csvInfo").textContent = `${j.count} строк · колонки: ${j.columns.join(", ")}`;
+  $("#csvInfo").textContent = t("csvInfo", j.count, j.columns.join(", "));
   $("#tablePane").classList.remove("hidden"); $("#paneResizer").classList.remove("hidden"); $("#csvSearch").value="";
   $("#groupWrap").classList.toggle("hidden", !CSV.columns.includes("group"));
   $("#previewAllBtn").classList.remove("hidden");
   $("#closeCsvBtn").classList.remove("hidden");
   $("#batchBtn").classList.add("hidden");
-  $("#printBtn").textContent="Печать партии";
+  updatePrintBtn();
   renderCsvTable();
 };
 $("#closeCsvBtn").onclick = ()=>{
   CSV=null; csvSel=new Set(); csvPrinted=new Set(); lastPreviewRows=[];
-  $("#printBtn").textContent="Печать";
-  $("#csvFile").value=""; $("#csvInfo").textContent=""; $("#csvFname").textContent="файл не выбран";
+  updatePrintBtn();
+  $("#csvFile").value=""; $("#csvInfo").textContent=""; $("#csvFname").textContent=t("noFile");
   $("#tablePane").classList.add("hidden"); $("#paneResizer").classList.add("hidden");
   ["previewAllBtn","batchBtn","closeCsvBtn","groupWrap"].forEach(id=>$("#"+id).classList.add("hidden"));
   showGallery(false);
@@ -510,7 +624,7 @@ function renderCsvTable(){
   const arrow=c=> csvSort.col===c ? (csvSort.dir>0?" ▲":" ▼") : "";
   const allSel=filt.length && filt.every(r=>csvSel.has(r.__i));
   const head=`<th class="chk"><input type="checkbox" id="csvAll" ${allSel?"checked":""}></th>`+
-    `<th class="pf" title="напечатано">✓</th>`+
+    `<th class="pf" title="${t("printedTitle")}">✓</th>`+
     CSV.columns.map(c=>`<th data-c="${c}">${c}${arrow(c)}</th>`).join("");
   const body=filt.map(r=>`<tr class="${csvSel.has(r.__i)?"sel":""} ${csvPrinted.has(r.__i)?"prt":""}" data-i="${r.__i}">`+
     `<td class="chk"><input type="checkbox" class="rowchk" ${csvSel.has(r.__i)?"checked":""}></td>`+
@@ -520,9 +634,9 @@ function renderCsvTable(){
   if(typeof grouped==="function" && grouped()){
     const selG=new Set([...csvSel].map(x=>(CSV.rows.find(r=>r.__i===x)||{}).group));
     const allG=new Set(filt.map(r=>r.group));
-    $("#selInfo").textContent = `Групп/наклеек: ${allG.size} · выбрано ${selG.size||"- (все)"}`;
+    $("#selInfo").textContent = t("selGroups", allG.size, selG.size||t("selAll"));
   } else {
-    $("#selInfo").textContent = `Показано ${filt.length} · выбрано ${csvSel.size||"- (весь фильтр)"}`;
+    $("#selInfo").textContent = t("selRows", filt.length, csvSel.size||t("selFilter"));
   }
   $("#csvAll").onchange=e=>{ filt.forEach(r=> e.target.checked? csvSel.add(r.__i):csvSel.delete(r.__i)); renderCsvTable(); if(batchShown())refreshBatch(true); };
   $("#csvTableWrap").querySelectorAll("th[data-c]").forEach(th=>th.onclick=()=>{
@@ -548,49 +662,50 @@ let lastPreviewRows = [];       // rows shown in the gallery (for marking printe
 const grouped = ()=> $("#groupMode").checked && CSV && CSV.columns.includes("group");
 const batchShown = ()=> !$("#batchGallery").classList.contains("hidden");
 async function refreshBatch(quiet){
-  const rows=selectedRows(); if(!rows.length){ if(!quiet) toast("Нет строк"); return; }
+  const rows=selectedRows(); if(!rows.length){ if(!quiet) toast(t("noRows")); return; }
   lastPreviewRows = rows;
   let r;
   if(grouped()){
     const specs=buildGroupedSpecs(rows);
-    if(!quiet) toast("Рендерю "+specs.length+" наклеек (группировка)...");
+    if(!quiet) toast(t("renderingGroup",specs.length));
     r = await fetch("/api/render_specs",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({specs})});
   } else {
-    if(!quiet) toast("Рендерю "+rows.length+" наклеек...");
+    if(!quiet) toast(t("rendering",rows.length));
     r = await fetch("/api/render_batch",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({template:buildSpec(), rows})});
   }
   const j = await r.json();
   const totalMm = j.items.reduce((a,it)=> a + it.mm, 0);   // exact sum of the per-label lengths shown above
+  const unit = LANG==="ru" ? "мм" : "mm";
   const strip = j.items.map((it,k)=>{
     const gi = rows[k] ? rows[k].__i : it.index;
     return `<div class="tcell ${csvPrinted.has(gi)?'printed':''}">`+
-      `<div class="tcm">#${it.index+1} · ~${it.mm}мм · ${it.tape_mm}мм</div>`+
+      `<div class="tcm">#${it.index+1} · ~${it.mm}${unit} · ${it.tape_mm}${unit}</div>`+
       `<div class="timg"><img src="${it.png}"></div></div>`;
   }).join("");
   $("#batchGallery").innerHTML =
-    `<div class="tapeHdr">Партия: ${j.count} наклеек · длина ~${Math.round(totalMm)} мм</div>`+
+    `<div class="tapeHdr">${t("batchCount",j.count)} · ${t("batchLen",Math.round(totalMm))}</div>`+
     `<div class="tapeStrip">${strip}</div>`;
   showGallery(true);
   $("#batchBtn").classList.remove("hidden");
-  if(!quiet) toast(`Предпросмотр: ${j.count}. Проверь и жми «Печать».`);
+  if(!quiet) toast(t("previewDone",j.count));
 }
 $("#previewAllBtn").onclick = ()=>refreshBatch(false);
 async function printBatch(){
-  const rows=selectedRows(); if(!rows.length){ toast("Нет строк для печати"); return; }
+  const rows=selectedRows(); if(!rows.length){ toast(t("noRowsPrint")); return; }
   let r, j;
   if(grouped()){
     const specs=buildGroupedSpecs(rows);
-    if(!confirm(`Отправить на печать ${specs.length} наклеек (группировка)?`)) return;
+    if(!confirm(t("confirmBatchGroup",specs.length))) return;
     r = await fetch("/api/print_specs",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({specs})});
   } else {
-    if(!confirm(`Отправить на печать ${rows.length} наклеек?`)) return;
+    if(!confirm(t("confirmBatch",rows.length))) return;
     r = await fetch("/api/print_batch",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({template:buildSpec(), rows})});
   }
   j = await r.json();
   rows.forEach(r=>csvPrinted.add(r.__i));   // mark printed
   renderCsvTable();
   $("#batchGallery").querySelectorAll(".tcell").forEach((c,k)=>{ if(lastPreviewRows[k] && csvPrinted.has(lastPreviewRows[k].__i)) c.classList.add("printed"); });
-  toast(`Пакет: ${j.count} наклеек отправлено`);
+  toast(t("batchSent",j.count));
 }
 $("#batchBtn").onclick = printBatch;
 
@@ -757,16 +872,16 @@ const ICON_WRAP = inner => `<svg viewBox="0 0 24 24" fill="none" stroke="#000" s
 let iconTheme = null;
 function openIconModal(){
   const themes = Object.keys(ICONS);
-  $("#iconTabs").innerHTML = themes.map(t=>`<span class="itab" data-t="${t}">${t}</span>`).join("");
+  $("#iconTabs").innerHTML = themes.map(th=>`<span class="itab" data-t="${th}">${themeLabel(th)}</span>`).join("");
   $("#iconTabs").querySelectorAll(".itab").forEach(el=>el.onclick=()=>showIconTheme(el.dataset.t));
   showIconTheme(iconTheme || themes[0]);
   $("#iconModal").classList.add("open");
 }
-function showIconTheme(t){
-  iconTheme = t;
-  $("#iconTabs").querySelectorAll(".itab").forEach(el=>el.classList.toggle("sel", el.dataset.t===t));
-  $("#iconGrid").innerHTML = ICONS[t].map((ic,i)=>`<div class="icell" data-i="${i}" title="${ic.n}">${ICON_WRAP(ic.s)}</div>`).join("");
-  $("#iconGrid").querySelectorAll(".icell").forEach(el=>el.onclick=()=>chooseIcon(ICONS[t][+el.dataset.i]));
+function showIconTheme(th){
+  iconTheme = th;
+  $("#iconTabs").querySelectorAll(".itab").forEach(el=>el.classList.toggle("sel", el.dataset.t===th));
+  $("#iconGrid").innerHTML = ICONS[th].map((ic,i)=>`<div class="icell" data-i="${i}" title="${ic.n}">${ICON_WRAP(ic.s)}</div>`).join("");
+  $("#iconGrid").querySelectorAll(".icell").forEach(el=>el.onclick=()=>chooseIcon(ICONS[th][+el.dataset.i]));
 }
 function chooseIcon(ic){
   const full = `<svg xmlns="http://www.w3.org/2000/svg" width="240" height="240" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${ic.s}</svg>`;
@@ -779,7 +894,7 @@ function chooseIcon(ic){
     LOGO = c.toDataURL("image/png");
     if(!["image","image_text","image_flag"].includes(TYPE)) setType("image");
     $("#clearLogo").classList.remove("hidden");
-    $("#logoName").textContent = "иконка: "+ic.n;
+    $("#logoName").textContent = t("iconChosen", ic.n);
     $("#iconModal").classList.remove("open");
     scheduleRender();
   };
@@ -818,7 +933,7 @@ $("#saveCsv").onclick=()=>{
       ln.font||"DejaVu Sans", ln.size_pt||0, spec.line_spacing, spec.tape_mm ].map(esc).join(","));
   const csv=cols.join(",")+"\n"+rows.join("\n")+"\n";
   download("label_template.csv", csv, "text/csv");
-  toast("CSV-шаблон сохранён ("+spec.lines.length+" строк). Дублируй группы и наполняй текст.");
+  toast(t("tplSaved", spec.lines.length));
 };
 // cable type preset -> diameter (0 = manual, keep field editable)
 $("#cableType").onchange=()=>{ const v=+$("#cableType").value; if(v>0){ $("#cableDia").value=v; scheduleRender(); } };
@@ -831,7 +946,7 @@ $("#logoFile").onchange=e=>{
   r.onload=()=>{ LOGO=r.result; $("#clearLogo").classList.remove("hidden"); $("#logoName").textContent=f.name; scheduleRender(); };
   r.readAsDataURL(f);
 };
-$("#clearLogo").onclick=()=>{ LOGO=""; $("#logoFile").value=""; $("#clearLogo").classList.add("hidden"); $("#logoName").textContent="файл не выбран"; scheduleRender(); };
+$("#clearLogo").onclick=()=>{ LOGO=""; $("#logoFile").value=""; $("#clearLogo").classList.add("hidden"); $("#logoName").textContent=t("noFile"); scheduleRender(); };
 
 // wire global controls
 ["#tape","#lenMode","#lenMm","#margin","#invert","#codeData","#barcodeType","#showCodeText","#codeSide","#cableDia","#wrapMm","#flagMirror","#repeat","#ports","#pitch","#lineSpacing"].forEach(s=>{ const el=$(s); el.oninput=scheduleRender; el.onchange=scheduleRender; });
@@ -839,11 +954,12 @@ $("#lineSpacing").addEventListener("input",()=>{ $("#lsVal").textContent=(+$("#l
 $("#lenMode").addEventListener("change", applyLenMode);
 $("#addLine").onclick=()=>addLine("");
 $("#printBtn").onclick=doPrint;
-$("#cutBtn").onclick=async()=>{ const j=await (await fetch("/api/cut",{method:"POST"})).json(); toast(j.message||"обрез"); };
-$("#stopBtn").onclick=async()=>{ await fetch("/api/stop",{method:"POST"}); toast("Стоп: остановка после текущей наклейки"); };
+$("#cutBtn").onclick=async()=>{ const j=await (await fetch("/api/cut",{method:"POST"})).json(); toast(j.message||t("cutToast")); };
+$("#stopBtn").onclick=async()=>{ await fetch("/api/stop",{method:"POST"}); toast(t("stopToast")); };
+$("#langBtn").onclick=()=>setLang(LANG==="ru"?"en":"ru");
 $("#refreshBtn").onclick=doRender;
 
-(async()=>{ await loadMeta(); applyLenMode(); await checkStatus(); doRender(); setInterval(checkStatus, 8000); })();
+(async()=>{ await loadMeta(); applyLenMode(); applyLang(); await checkStatus(); doRender(); setInterval(checkStatus, 8000); })();
 </script>
 </body>
 </html>
