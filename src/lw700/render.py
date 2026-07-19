@@ -22,7 +22,8 @@ import math
 
 Align = Literal["left", "center", "right"]
 LabelType = Literal["text", "qr", "barcode", "text_qr", "image", "image_text",
-                    "cable_flag", "image_flag", "qr_flag", "cable_wrap", "patch_panel"]
+                    "cable_flag", "image_flag", "qr_flag", "text_qr_flag",
+                    "image_text_flag", "cable_wrap", "patch_panel"]
 
 MAX_LENGTH_MM = 500  # safety cap
 LINE_PAD_FRAC = 0.15  # vertical padding inside each text band
@@ -270,6 +271,16 @@ def render(spec: LabelSpec) -> Image.Image:
         img = _flag_from_face(_decode_logo(spec.image_b64, height), spec, height)
     elif spec.label_type == "qr_flag":
         img = _flag_from_face(_qr_img(spec.code_data or " ", height), spec, height)
+    elif spec.label_type == "text_qr_flag":
+        qr = _qr_img(spec.code_data or " ", height)
+        cap = _text_block(spec.lines, height, margin, None, spec.line_spacing / 2)
+        face = _side_by_side(qr, cap, height, margin, None, spec.code_side)
+        img = _flag_from_face(face, spec, height)
+    elif spec.label_type == "image_text_flag":
+        logo = _decode_logo(spec.image_b64, height)
+        cap = _text_block(spec.lines, height, margin, None, spec.line_spacing / 2)
+        face = _side_by_side(logo, cap, height, margin, None, spec.code_side)
+        img = _flag_from_face(face, spec, height)
     elif spec.label_type == "cable_wrap":
         img = _cable_wrap(spec, height, margin)
     elif spec.label_type == "patch_panel":

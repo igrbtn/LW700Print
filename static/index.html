@@ -342,7 +342,7 @@ const I18N = {
     printedTitle:"напечатано", done:"готово", stopToast:"Стоп: остановка после текущей наклейки", cutToast:"обрез",
     tplSaved:n=>`CSV-шаблон сохранён (${n} строк). Дублируй группы и наполняй текст.`,
     iconChosen:n=>"иконка: "+n, dimsLabel:(dots,mm)=>`${dots} точек · ~${mm} мм`,
-    types:{text:"Текст", qr:"QR", barcode:"Штрихкод", text_qr:"Текст + QR", image:"Изображение", image_text:"Изображение + текст", cable_flag:"Флажок кабеля", image_flag:"Изображение + флажок", qr_flag:"QR + флажок", cable_wrap:"Обёртка кабеля", patch_panel:"Патч-панель"},
+    types:{text:"Текст", qr:"QR", barcode:"Штрихкод", text_qr:"Текст + QR", image:"Изображение", image_text:"Изображение + текст", cable_flag:"Флажок кабеля", image_flag:"Изображение + флажок", qr_flag:"QR + флажок", text_qr_flag:"QR + текст + флажок", image_text_flag:"Изображение + текст + флажок", cable_wrap:"Обёртка кабеля", patch_panel:"Патч-панель"},
     themes:{"ЦОД":"ЦОД","Стрелки":"Стрелки","Офис":"Офис","Дом":"Дом","Электричество":"Электричество","Эмодзи":"Эмодзи"},
     tpl:["1 строка","2 строки","3 строки","4 строки","Заголовок (крупный жирный) + подпись","Заголовок + 2 подписи","Заголовок + 3 подписи"]
   },
@@ -387,7 +387,7 @@ const I18N = {
     printedTitle:"printed", done:"done", stopToast:"Stop: halting after the current label", cutToast:"cut",
     tplSaved:n=>`CSV template saved (${n} lines). Duplicate groups and fill the text.`,
     iconChosen:n=>"icon: "+n, dimsLabel:(dots,mm)=>`${dots} dots · ~${mm} mm`,
-    types:{text:"Text", qr:"QR", barcode:"Barcode", text_qr:"Text + QR", image:"Image", image_text:"Image + text", cable_flag:"Cable flag", image_flag:"Image + flag", qr_flag:"QR + flag", cable_wrap:"Cable wrap", patch_panel:"Patch panel"},
+    types:{text:"Text", qr:"QR", barcode:"Barcode", text_qr:"Text + QR", image:"Image", image_text:"Image + text", cable_flag:"Cable flag", image_flag:"Image + flag", qr_flag:"QR + flag", text_qr_flag:"QR + text + flag", image_text_flag:"Image + text + flag", cable_wrap:"Cable wrap", patch_panel:"Patch panel"},
     themes:{"ЦОД":"Datacenter","Стрелки":"Arrows","Офис":"Office","Дом":"Home","Электричество":"Electricity","Эмодзи":"Emoji"},
     tpl:["1 line","2 lines","3 lines","4 lines","Header (large bold) + caption","Header + 2 captions","Header + 3 captions"]
   }
@@ -445,15 +445,15 @@ function syncTypeUI(){
   $("#typeMore").classList.toggle("sel-more", inMore);
 }
 function applyTypeUI(){
-  const showText  = ["text","text_qr","image_text","cable_flag","cable_wrap","patch_panel"].includes(TYPE);
-  const showCode  = ["qr","barcode","text_qr","qr_flag"].includes(TYPE);
-  const showImage = ["image","image_text","image_flag"].includes(TYPE);
-  const showSide  = ["text_qr","image_text"].includes(TYPE);
+  const showText  = ["text","text_qr","image_text","cable_flag","cable_wrap","patch_panel","text_qr_flag","image_text_flag"].includes(TYPE);
+  const showCode  = ["qr","barcode","text_qr","qr_flag","text_qr_flag"].includes(TYPE);
+  const showImage = ["image","image_text","image_flag","image_text_flag"].includes(TYPE);
+  const showSide  = ["text_qr","image_text","text_qr_flag","image_text_flag"].includes(TYPE);
   $("#textFs").classList.toggle("hidden", !showText);
   $("#codeFs").classList.toggle("hidden", !showCode);
   $("#imageFs").classList.toggle("hidden", !showImage);
   $("#sideFs").classList.toggle("hidden", !showSide);
-  $("#flagFs").classList.toggle("hidden", !["cable_flag","cable_wrap","image_flag","qr_flag"].includes(TYPE));
+  $("#flagFs").classList.toggle("hidden", !["cable_flag","cable_wrap","image_flag","qr_flag","text_qr_flag","image_text_flag"].includes(TYPE));
   $("#panelFs").classList.toggle("hidden", TYPE!=="patch_panel");
 }
 
@@ -927,7 +927,7 @@ function chooseIcon(ic){
     const g=c.getContext("2d"); g.fillStyle="#fff"; g.fillRect(0,0,240,240); g.drawImage(im,0,0,240,240);
     URL.revokeObjectURL(url);
     LOGO = c.toDataURL("image/png");
-    if(!["image","image_text","image_flag"].includes(TYPE)) setType("image");
+    if(!["image","image_text","image_flag","image_text_flag"].includes(TYPE)) setType("image");
     $("#clearLogo").classList.remove("hidden");
     $("#logoName").textContent = t("iconChosen", ic.n);
     $("#iconModal").classList.remove("open");
